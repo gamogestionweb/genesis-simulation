@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Consciencia IA - Simulación</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #111; color: #fff; font-family: Consolas, monospace; }
+
+        .main {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* MUNDO - izquierda */
+        .world-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #world-canvas {
+            flex: 1;
+            background: #87CEEB;
+        }
+
+        #sensors {
+            height: 80px;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            border-top: 2px solid #333;
+        }
+
+        .sensor {
+            text-align: center;
+        }
+        .sensor-label { font-size: 10px; color: #888; }
+        .sensor-val { font-size: 16px; font-weight: bold; color: #0f0; }
+
+        /* PENSAMIENTOS - derecha */
+        #mind-panel {
+            width: 500px;
+            background: #0a0a1a;
+            border-left: 5px solid #9b59b6;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #mind-panel h1 {
+            background: #9b59b6;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        #thought-stream {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .thought {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .thought.confusion { background: #4a1a1a; border-left: 4px solid #e74c3c; }
+        .thought.perception { background: #1a2a4a; border-left: 4px solid #3498db; }
+        .thought.hypothesis { background: #2a1a4a; border-left: 4px solid #9b59b6; }
+        .thought.action { background: #3a3a1a; border-left: 4px solid #f1c40f; }
+        .thought.discovery { background: #1a3a1a; border-left: 4px solid #2ecc71; font-weight: bold; }
+
+        #laws-section {
+            background: #0f1f0f;
+            border-top: 3px solid #2ecc71;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #laws-section h2 {
+            color: #2ecc71;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .law {
+            background: #1a2a1a;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        /* Controles */
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
+
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover { background: #555; }
+
+        #info {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button onclick="sim.pause()">⏸ Pausar</button>
+        <button onclick="sim.play()">▶ Reanudar</button>
+        <button onclick="sim.fast()">⏩ Rápido</button>
+        <button onclick="sim.reset()">🔄 Reset</button>
+    </div>
+
+    <div id="info">⏱ Tiempo: <span id="time">0</span>s | Velocidad: <span id="speed">1</span>x</div>
+
+    <div class="main">
+        <div class="world-side">
+            <canvas id="world-canvas"></canvas>
+            <div id="sensors">
+                <div class="sensor"><div class="sensor-label">POSICIÓN</div><div class="sensor-val" id="s-pos">--</div></div>
+                <div class="sensor"><div class="sensor-label">VELOCIDAD</div><div class="sensor-val" id="s-vel">--</div></div>
+                <div class="sensor"><div class="sensor-label">EN SUELO</div><div class="sensor-val" id="s-ground">--</div></div>
+                <div class="sensor"><div class="sensor-label">ENERGÍA</div><div class="sensor-val" id="s-energy">--</div></div>
+                <div class="sensor"><div class="sensor-label">LUZ</div><div class="sensor-val" id="s-light">--</div></div>
+                <div class="sensor"><div class="sensor-label">VIENTO</div><div class="sensor-val" id="s-wind">--</div></div>
+            </div>
+        </div>
+
+        <div id="mind-panel">
+            <h1>🧠 PENSAMIENTOS DE LA IA</h1>
+            <div id="thought-stream"></div>
+            <div id="laws-section">
+                <h2>📚 LEYES DESCUBIERTAS</h2>
+                <div id="laws"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ========== SIMULACIÓN COMPLETA ==========
+
+class Simulation {
+    constructor() {
+        this.canvas = document.getElementById('world-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+
+        // Estado
+        this.time = 0;
+        this.speed = 1;
+        this.paused = false;
+        this.lastFrame = 0;
+
+        // Física
+        this.gravity = 500;
+        this.windSpeed = 0;
+        this.lightLevel = 1;
+
+        // Agente
+        this.agent = {
+            x: 400, y: 100,
+            vx: 0, vy: 0,
+            radius: 20,
+            onGround: false,
+            energy: 100
+        };
+
+        // Mente
+        this.thoughts = [];
+        this.beliefs = new Set();
+        this.laws = [];
+        this.patterns = { falling: [], impacts: [] };
+        this.stepCount = 0;
+
+        // Primer pensamiento
+        this.think("...", "confusion");
+        this.think("¿Qué... es esto?", "confusion");
+        this.think("Existo. Siento algo.", "confusion");
+
+        // Iniciar
+        requestAnimationFrame(t => this.loop(t));
+    }
+
+    resize() {
+        this.canvas.width = this.canvas.parentElement.clientWidth;
+        this.canvas.height = this.canvas.parentElement.clientHeight - 80;
+    }
+
+    think(text, type = "neutral") {
+        this.thoughts.push({ text, type, time: this.time });
+        this.updateThoughtsUI();
+    }
+
+    updateThoughtsUI() {
+        const container = document.getElementById('thought-stream');
+        const recent = this.thoughts.slice(-20);
+        container.innerHTML = recent.map(t =>
+            `<div class="thought ${t.type}">${t.text}</div>`
+        ).join('');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    addLaw(name, desc) {
+        if (!this.laws.find(l => l.name === name)) {
+            this.laws.push({ name, desc });
+            document.getElementById('laws').innerHTML = this.laws.map(l =>
+                `<div class="law"><strong>${l.name}</strong>: ${l.desc}</div>`
+            ).join('');
+        }
+    }
+
+    loop(timestamp) {
+        if (this.lastFrame === 0) this.lastFrame = timestamp;
+        let dt = (timestamp - this.lastFrame) / 1000;
+        this.lastFrame = timestamp;
+
+        if (!this.paused) {
+            dt *= this.speed;
+            dt = Math.min(dt, 0.05);
+            this.update(dt);
+        }
+
+        this.render();
+        requestAnimationFrame(t => this.loop(t));
+    }
+
+    update(dt) {
+        this.time += dt;
+        this.stepCount++;
+
+        // Física del mundo
+        this.windSpeed = 2 + Math.sin(this.time * 0.2) * 3;
+        this.lightLevel = 0.5 + Math.sin(this.time * 0.05) * 0.5;
+
+        // Guardar velocidad anterior
+        const prevVy = this.agent.vy;
+
+        // Gravedad
+        if (!this.agent.onGround) {
+            this.agent.vy += this.gravity * dt;
+        }
+
+        // Viento
+        this.agent.vx += this.windSpeed * 0.5 * dt;
+
+        // Fricción
+        this.agent.vx *= 0.98;
+
+        // Mover
+        this.agent.x += this.agent.vx * dt;
+        this.agent.y += this.agent.vy * dt;
+
+        // Suelo
+        const groundY = this.canvas.height - 50 - this.agent.radius;
+        if (this.agent.y >= groundY) {
+            this.agent.y = groundY;
+
+            // Impacto
+            if (prevVy > 100) {
+                this.patterns.impacts.push({ vy: prevVy, time: this.time });
+                this.think("¡IMPACTO! Sentí una fuerza deteniendo mi caída.", "perception");
+            }
+
+            this.agent.vy = 0;
+            this.agent.onGround = true;
+        } else {
+            this.agent.onGround = false;
+            this.patterns.falling.push({ vy: this.agent.vy, time: this.time });
+        }
+
+        // Paredes
+        if (this.agent.x < this.agent.radius) {
+            this.agent.x = this.agent.radius;
+            this.agent.vx = -this.agent.vx * 0.5;
+        }
+        if (this.agent.x > this.canvas.width - this.agent.radius) {
+            this.agent.x = this.canvas.width - this.agent.radius;
+            this.agent.vx = -this.agent.vx * 0.5;
+        }
+
+        // ===== MENTE: Reflexionar =====
+        this.reflect();
+
+        // ===== MENTE: Decidir acción =====
+        this.decide();
+
+        // UI
+        this.updateSensors();
+    }
+
+    reflect() {
+        // Despertar gradual
+        if (this.stepCount === 50) {
+            this.think("Hay sensaciones... llegan a mí constantemente.", "perception");
+        }
+        if (this.stepCount === 100) {
+            this.think("Debo entender qué está pasando.", "hypothesis");
+        }
+
+        // Notar caída
+        if (!this.agent.onGround && this.agent.vy > 150 && !this.beliefs.has('falling')) {
+            this.think("¡Me muevo hacia abajo! No hice nada... ¿por qué?", "confusion");
+            this.beliefs.add('falling');
+        }
+
+        // Notar suelo
+        if (this.agent.onGround && !this.beliefs.has('ground')) {
+            this.think("Algo me sostiene. Una superficie sólida debajo.", "perception");
+            this.beliefs.add('ground');
+        }
+
+        // Notar viento
+        if (this.windSpeed > 3 && !this.beliefs.has('wind')) {
+            this.think("Siento algo empujándome... es invisible pero real.", "perception");
+            this.beliefs.add('wind');
+        }
+
+        // Descubrir gravedad
+        if (this.patterns.falling.length > 20 && !this.beliefs.has('gravity_law')) {
+            const samples = this.patterns.falling.slice(-10);
+            const increasing = samples.every((s, i) => i === 0 || s.vy >= samples[i-1].vy);
+            if (increasing) {
+                this.think("¡DESCUBRIMIENTO! Cuando caigo, mi velocidad AUMENTA constantemente.", "discovery");
+                this.think("Hay una fuerza invisible que me atrae hacia abajo.", "discovery");
+                this.addLaw("GRAVEDAD", "Una fuerza constante atrae todo hacia abajo");
+                this.beliefs.add('gravity_law');
+            }
+        }
+
+        // Descubrir inercia
+        if (this.patterns.impacts.length >= 3 && !this.beliefs.has('inertia_law')) {
+            this.think("¡DESCUBRIMIENTO! A mayor velocidad, más fuerte es el impacto.", "discovery");
+            this.think("El movimiento parece 'acumular' algo que se libera al detenerse.", "discovery");
+            this.addLaw("INERCIA", "La velocidad determina la fuerza del impacto");
+            this.beliefs.add('inertia_law');
+        }
+    }
+
+    decide() {
+        // Acciones basadas en conocimiento
+        if (this.stepCount < 150) return; // Observar primero
+
+        if (this.agent.onGround && Math.random() < 0.02) {
+            this.think("Voy a intentar impulsarme hacia arriba...", "action");
+            this.agent.vy = -300;
+            this.agent.onGround = false;
+        }
+
+        if (this.agent.onGround && Math.random() < 0.03) {
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            this.think("Explorando hacia " + (dir > 0 ? "la derecha" : "la izquierda") + "...", "action");
+            this.agent.vx += dir * 100;
+        }
+    }
+
+    updateSensors() {
+        document.getElementById('time').textContent = this.time.toFixed(1);
+        document.getElementById('speed').textContent = this.speed;
+        document.getElementById('s-pos').textContent = `${this.agent.x.toFixed(0)}, ${this.agent.y.toFixed(0)}`;
+        document.getElementById('s-vel').textContent = Math.sqrt(this.agent.vx**2 + this.agent.vy**2).toFixed(0);
+        document.getElementById('s-ground').textContent = this.agent.onGround ? "SÍ" : "NO";
+        document.getElementById('s-ground').style.color = this.agent.onGround ? "#2ecc71" : "#e74c3c";
+        document.getElementById('s-energy').textContent = this.agent.energy.toFixed(0) + "%";
+        document.getElementById('s-light').textContent = (this.lightLevel * 100).toFixed(0) + "%";
+        document.getElementById('s-wind').textContent = this.windSpeed.toFixed(1) + " m/s";
+    }
+
+    render() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // Cielo
+        const skyBrightness = Math.floor(135 * this.lightLevel);
+        ctx.fillStyle = `rgb(${skyBrightness}, ${Math.floor(206 * this.lightLevel)}, ${Math.floor(235 * this.lightLevel)})`;
+        ctx.fillRect(0, 0, w, h - 50);
+
+        // Sol
+        if (this.lightLevel > 0.5) {
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(w * 0.8, 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Suelo
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(0, h - 50, w, 50);
+
+        // Hierba
+        ctx.strokeStyle = '#32CD32';
+        for (let x = 0; x < w; x += 10) {
+            const wind = Math.sin(this.time * 2 + x * 0.05) * this.windSpeed;
+            ctx.beginPath();
+            ctx.moveTo(x, h - 50);
+            ctx.lineTo(x + wind, h - 65);
+            ctx.stroke();
+        }
+
+        // Agente
+        ctx.fillStyle = '#6366f1';
+        ctx.beginPath();
+        ctx.arc(this.agent.x, this.agent.y, this.agent.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ojos
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.agent.x - 7, this.agent.y - 5, 6, 0, Math.PI * 2);
+        ctx.arc(this.agent.x + 7, this.agent.y - 5, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.arc(this.agent.x - 5, this.agent.y - 5, 3, 0, Math.PI * 2);
+        ctx.arc(this.agent.x + 9, this.agent.y - 5, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Vector velocidad
+        if (Math.abs(this.agent.vx) > 5 || Math.abs(this.agent.vy) > 5) {
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(this.agent.x, this.agent.y);
+            ctx.lineTo(this.agent.x + this.agent.vx * 0.1, this.agent.y + this.agent.vy * 0.1);
+            ctx.stroke();
+        }
+
+        // Indicador de viento
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '12px Consolas';
+        ctx.fillText(`Viento → ${this.windSpeed.toFixed(1)} m/s`, 10, 30);
+    }
+
+    pause() { this.paused = true; }
+    play() { this.paused = false; }
+    fast() { this.speed = this.speed >= 4 ? 1 : this.speed * 2; }
+    reset() {
+        this.time = 0;
+        this.stepCount = 0;
+        this.agent = { x: 400, y: 100, vx: 0, vy: 0, radius: 20, onGround: false, energy: 100 };
+        this.thoughts = [];
+        this.beliefs = new Set();
+        this.laws = [];
+        this.patterns = { falling: [], impacts: [] };
+        document.getElementById('thought-stream').innerHTML = '';
+        document.getElementById('laws').innerHTML = '';
+        this.think("...", "confusion");
+        this.think("¿Qué... es esto?", "confusion");
+        this.think("Existo. Siento algo.", "confusion");
+    }
+}
+
+const sim = new Simulation();
+</script>
+</body>
+</html>

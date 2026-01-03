@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Consciencia Emergente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            grid-template-rows: 1fr 200px;
+            height: 100vh;
+            gap: 2px;
+            background: #1a1a2e;
+        }
+
+        #world-canvas {
+            background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 60%, #228B22 60%, #228B22 100%);
+            border: 1px solid #333;
+        }
+
+        #thought-panel {
+            background: #0d0d15;
+            padding: 15px;
+            overflow-y: auto;
+            border-left: 2px solid #4a0080;
+        }
+
+        #thought-panel h2 {
+            color: #9b59b6;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #thoughts {
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .thought {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .thought.perception {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid #3498db;
+        }
+
+        .thought.hypothesis {
+            background: rgba(155, 89, 182, 0.2);
+            border-left: 3px solid #9b59b6;
+        }
+
+        .thought.discovery {
+            background: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+        }
+
+        .thought.confusion {
+            background: rgba(231, 76, 60, 0.2);
+            border-left: 3px solid #e74c3c;
+        }
+
+        .thought.action {
+            background: rgba(241, 196, 15, 0.2);
+            border-left: 3px solid #f1c40f;
+        }
+
+        #sensor-panel {
+            background: #0d0d15;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            border-top: 2px solid #2c3e50;
+        }
+
+        .sensor-box {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .sensor-box h3 {
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .sensor-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #knowledge-panel {
+            background: #0d0d15;
+            padding: 15px;
+            border-top: 2px solid #27ae60;
+            overflow-y: auto;
+        }
+
+        #knowledge-panel h2 {
+            color: #27ae60;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .law {
+            background: rgba(39, 174, 96, 0.1);
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .law .confidence {
+            color: #27ae60;
+            float: right;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: #34495e;
+        }
+
+        #time-display {
+            position: fixed;
+            top: 10px;
+            right: 420px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button onclick="simulation.togglePause()">⏯ Pausar/Reanudar</button>
+        <button onclick="simulation.reset()">🔄 Reiniciar</button>
+        <button onclick="simulation.speedUp()">⏩ Acelerar</button>
+    </div>
+
+    <div id="time-display">Tiempo: <span id="sim-time">0</span>s</div>
+
+    <div class="container">
+        <canvas id="world-canvas"></canvas>
+
+        <div id="thought-panel">
+            <h2>🧠 Flujo de Consciencia</h2>
+            <div id="thoughts"></div>
+        </div>
+
+        <div id="sensor-panel">
+            <div class="sensor-box">
+                <h3>👁 VISIÓN</h3>
+                <div class="sensor-value" id="vision-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>🌡 TEMPERATURA</h3>
+                <div class="sensor-value" id="temp-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>💨 VIENTO</h3>
+                <div class="sensor-value" id="wind-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>⚖ PRESIÓN</h3>
+                <div class="sensor-value" id="pressure-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>🦵 POSICIÓN</h3>
+                <div class="sensor-value" id="position-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>⚡ ENERGÍA</h3>
+                <div class="sensor-value" id="energy-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>🎯 VELOCIDAD</h3>
+                <div class="sensor-value" id="velocity-sensor">--</div>
+            </div>
+            <div class="sensor-box">
+                <h3>☀ LUZ</h3>
+                <div class="sensor-value" id="light-sensor">--</div>
+            </div>
+        </div>
+
+        <div id="knowledge-panel">
+            <h2>📚 Leyes Descubiertas</h2>
+            <div id="discovered-laws"></div>
+        </div>
+    </div>
+
+    <script src="physics.js"></script>
+    <script src="agent.js"></script>
+    <script src="mind.js"></script>
+    <script src="simulation.js"></script>
+</body>
+</html>

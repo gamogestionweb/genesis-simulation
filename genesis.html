@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>GENESIS - Civilización Humana con IA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; }
+        body { background: #0a0a0f; color: #fff; font-family: 'Georgia', serif; }
+
+        .main { display: flex; height: 100vh; }
+        .world { width: 55%; height: 100%; position: relative; }
+        #canvas { width: 100%; height: 100%; }
+
+        #panel {
+            width: 45%;
+            height: 100vh;
+            background: linear-gradient(180deg, #12100d 0%, #0a0805 100%);
+            border-left: 2px solid #8b7355;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 10px 15px;
+            background: #1a1510;
+            border-bottom: 1px solid #3d3020;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel-header h2 { color: #d4a574; font-size: 14px; font-weight: normal; }
+        .panel-header button {
+            background: #2d5016;
+            color: #a0d060;
+            border: 1px solid #4a8020;
+            padding: 5px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        .panel-header button:hover { background: #3d6020; }
+
+        .tabs {
+            display: flex;
+            background: #151210;
+            border-bottom: 1px solid #3d3020;
+        }
+        .tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            color: #888;
+            font-size: 11px;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active { color: #d4a574; border-bottom-color: #d4a574; }
+        .tab:hover { color: #b08050; }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: none;
+        }
+        .tab-content.active { display: block; }
+
+        /* Población */
+        .human-card {
+            background: #1a1715;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 3px solid #8b7355;
+        }
+        .human-card.dead { opacity: 0.5; border-left-color: #555; }
+        .human-card.pregnant { border-left-color: #d4a0d4; }
+        .human-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .human-name { font-size: 14px; color: #d4a574; }
+        .human-name .gender { font-size: 12px; margin-left: 5px; }
+        .human-age { font-size: 11px; color: #888; }
+        .human-thought {
+            font-size: 11px;
+            color: #a0a0a0;
+            font-style: italic;
+            padding: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            margin-top: 6px;
+        }
+        .human-goal {
+            font-size: 10px;
+            color: #90c0ff;
+            padding: 4px 6px;
+            background: rgba(50,80,120,0.3);
+            border-radius: 3px;
+            margin-top: 4px;
+        }
+        .human-personality {
+            display: flex;
+            gap: 4px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+        .trait {
+            font-size: 9px;
+            padding: 2px 5px;
+            background: rgba(100,100,100,0.3);
+            border-radius: 3px;
+            color: #b0b0b0;
+        }
+        .trait.high { background: rgba(100,150,100,0.4); color: #a0d0a0; }
+        .trait.low { background: rgba(150,100,100,0.3); color: #d0a0a0; }
+        .human-stats {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 10px;
+        }
+        .stat-bar {
+            flex: 1;
+            background: #2a2520;
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .stat-bar-fill { height: 100%; }
+        .stat-bar-fill.hunger { background: #c08040; }
+        .stat-bar-fill.thirst { background: #4080c0; }
+        .stat-bar-fill.health { background: #60a060; }
+
+        /* Conversaciones */
+        .conversation {
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(100,130,180,0.1);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .conversation .from { color: #6482b4; font-weight: bold; }
+        .conversation .to { color: #82b464; }
+        .conversation .message { color: #a0a0a0; margin-top: 4px; }
+
+        /* Árbol genealógico */
+        .family-tree {
+            padding: 10px;
+        }
+        .generation {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(139,115,85,0.1);
+            border-radius: 6px;
+        }
+        .generation-title {
+            color: #d4a574;
+            font-size: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #3d3020;
+            padding-bottom: 5px;
+        }
+        .family-member {
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            background: #2a2520;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .family-member.male { border-left: 3px solid #6482b4; }
+        .family-member.female { border-left: 3px solid #d46482; }
+        .family-member.dead { opacity: 0.5; text-decoration: line-through; }
+
+        /* Estadísticas */
+        #stats-panel {
+            padding: 15px;
+        }
+        .stat-box {
+            background: #1a1715;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-box .number {
+            font-size: 28px;
+            color: #d4a574;
+        }
+        .stat-box .label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        /* Controles */
+        #controls {
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+        }
+        #controls button {
+            background: rgba(20,15,10,0.9);
+            color: #d4a574;
+            border: 1px solid #8b7355;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        #controls button:hover { background: rgba(40,30,20,0.9); }
+
+        #hud {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-70%);
+            background: rgba(10,8,5,0.95);
+            padding: 10px 25px;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #d4a574;
+            border: 1px solid #3d3020;
+        }
+
+        #minimap {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 200px;
+            height: 50px;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid #8b7355;
+            border-radius: 3px;
+        }
+
+        /* Modal Informe */
+        #reportModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        #reportContent {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background: #12100d;
+            border: 2px solid #8b7355;
+            border-radius: 10px;
+        }
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3d3020;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .report-header h1 { color: #d4a574; font-size: 22px; }
+        .report-section {
+            background: #1a1715;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 3px solid #8b7355;
+        }
+        .report-section h3 { color: #d4a574; margin-bottom: 10px; font-size: 14px; }
+        .report-section p, .report-section li { color: #a0a0a0; font-size: 12px; line-height: 1.6; }
+        .person-report {
+            background: #0d0a08;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .person-report h4 { color: #b08050; font-size: 13px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button onclick="sim.togglePause()">Pausa</button>
+        <button onclick="sim.setSpeed(1)">1x</button>
+        <button onclick="sim.setSpeed(3)">3x</button>
+        <button onclick="sim.setSpeed(10)">10x</button>
+        <button onclick="sim.reset()">Reset</button>
+    </div>
+
+    <div id="hud">
+        <span id="edenStatus">🌳 En el Edén</span> |
+        <span id="season">Primavera</span> | Año <span id="yearNum">1</span> | <span id="timeOfDay">Día</span> |
+        Población: <span id="population">2</span> | Generaciones: <span id="generations">1</span>
+    </div>
+
+    <div class="main">
+        <div class="world">
+            <canvas id="canvas"></canvas>
+            <canvas id="minimap"></canvas>
+        </div>
+
+        <div id="panel">
+            <div class="panel-header">
+                <h2>GENESIS - Civilización Humana</h2>
+                <div>
+                    <button onclick="sim.generateReport()">INFORME</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="population">Población</div>
+                <div class="tab" data-tab="eden">Edén</div>
+                <div class="tab" data-tab="conversations">Conversaciones</div>
+                <div class="tab" data-tab="family">Árbol Familiar</div>
+                <div class="tab" data-tab="stats">Estadísticas</div>
+            </div>
+
+            <div id="population-tab" class="tab-content active"></div>
+            <div id="eden-tab" class="tab-content"></div>
+            <div id="conversations-tab" class="tab-content"></div>
+            <div id="family-tab" class="tab-content"></div>
+            <div id="stats-tab" class="tab-content"></div>
+        </div>
+    </div>
+
+    <div id="reportModal">
+        <div id="reportContent"></div>
+    </div>
+
+<script>
+// ==================== CONSTANTES ====================
+const WORLD_WIDTH = 12000;
+const WORLD_HEIGHT = 800;
+const SEA_LEVEL = 500;
+
+// Jardín del Edén
+const EDEN = {
+    x1: 5500,
+    x2: 6500,
+    centerX: 6000
+};
+
+// Árbol prohibido
+const FORBIDDEN_TREE = {
+    x: 6000
+};
+
+// Puntos de Interés del Edén (deben coincidir con server.js)
+const POINTS_OF_INTEREST = [
+    { id: 1, x: 5600, name: 'Cascada Cristalina', type: 'waterfall', emoji: '💧' },
+    { id: 2, x: 5750, name: 'Bosque de Frutales', type: 'orchard', emoji: '🍎' },
+    { id: 3, x: 5900, name: 'Pradera Florida', type: 'meadow', emoji: '🌸' },
+    { id: 4, x: 6000, name: 'Árbol del Conocimiento', type: 'forbidden', emoji: '🍎' },
+    { id: 5, x: 6100, name: 'Cueva Misteriosa', type: 'cave', emoji: '🕳️' },
+    { id: 6, x: 6250, name: 'Lago Sereno', type: 'lake', emoji: '🏊' },
+    { id: 7, x: 6400, name: 'Colina del Amanecer', type: 'hill', emoji: '⛰️' },
+];
+
+// Animales del Edén (se sincronizan con server)
+let edenAnimals = [];
+
+// Estado del mundo
+let worldState = {
+    originalSin: { committed: false },
+    serpentActive: true,
+    animals: []
+};
+
+// ==================== MUNDO ====================
+const World = {
+    time: 0,
+    dayLength: 60,
+    day: 1,
+    year: 1,
+    season: 0,
+    temperature: 20,
+    weather: 'Despejado',
+    terrain: [],
+    biomes: [],
+    trees: [],
+    clouds: [],
+
+    init() {
+        this.generateTerrain();
+        this.generateTrees();
+        this.initClouds();
+    },
+
+    generateTerrain() {
+        this.terrain = [];
+        this.biomes = [];
+        let height = SEA_LEVEL - 100;
+
+        for(let x = 0; x < WORLD_WIDTH; x++) {
+            height += (Math.random() - 0.5) * 3;
+            height = height * 0.995 + (SEA_LEVEL - 100) * 0.005;
+
+            const noise = Math.sin(x * 0.01) * 30 + Math.sin(x * 0.003) * 80;
+            let h = Math.max(150, Math.min(WORLD_HEIGHT - 100, height + noise));
+
+            // El Edén es más plano y bajo (fértil)
+            if(x >= EDEN.x1 && x <= EDEN.x2) {
+                h = SEA_LEVEL - 80 + Math.sin(x * 0.02) * 10;
+            }
+
+            this.terrain.push({ height: h });
+
+            // Biomas
+            if(x >= EDEN.x1 && x <= EDEN.x2) {
+                this.biomes.push('eden'); // Jardín del Edén
+            } else if(x < 1000) {
+                this.biomes.push('beach');
+            } else if(x < 4000) {
+                this.biomes.push('forest');
+            } else if(x < 5500) {
+                this.biomes.push('plains');
+            } else if(x < 6500) {
+                this.biomes.push('eden');
+            } else if(x < 9000) {
+                this.biomes.push('hills');
+            } else {
+                this.biomes.push('mountains');
+            }
+        }
+    },
+
+    generateTrees() {
+        this.trees = [];
+        for(let x = 500; x < WORLD_WIDTH - 500; x += 12) {
+            const biome = this.biomes[x];
+            let chance, type;
+
+            if(biome === 'eden') {
+                chance = 0.5; // Muchos árboles en el Edén
+                type = 'fruit'; // Árboles frutales
+            } else if(biome === 'forest') {
+                chance = 0.4;
+                type = 'oak';
+            } else if(biome === 'plains') {
+                chance = 0.05;
+                type = 'oak';
+            } else {
+                chance = 0.1;
+                type = 'pine';
+            }
+
+            if(Math.random() < chance) {
+                this.trees.push({
+                    x: x + Math.random() * 10,
+                    y: this.terrain[x].height,
+                    height: biome === 'eden' ? 40 + Math.random() * 30 : 30 + Math.random() * 40,
+                    type: type,
+                    biome: biome
+                });
+            }
+        }
+
+        // Añadir río en el Edén
+        this.edenRiver = {
+            x: EDEN.centerX,
+            width: 40
+        };
+    },
+
+    initClouds() {
+        this.clouds = [];
+        for(let i = 0; i < 20; i++) {
+            this.clouds.push({
+                x: Math.random() * WORLD_WIDTH,
+                y: 40 + Math.random() * 80,
+                width: 80 + Math.random() * 120,
+                speed: 5 + Math.random() * 10
+            });
+        }
+    },
+
+    update(dt) {
+        this.time += dt;
+        const newDay = Math.floor(this.time / this.dayLength) + 1;
+        if(newDay !== this.day) {
+            this.day = newDay;
+            this.year = Math.floor((this.day - 1) / 365) + 1;
+            this.season = Math.floor(((this.day - 1) % 365) / 91);
+        }
+
+        // Nubes
+        for(const cloud of this.clouds) {
+            cloud.x += cloud.speed * dt;
+            if(cloud.x > WORLD_WIDTH + 200) cloud.x = -200;
+        }
+
+        // Temperatura según estación
+        this.temperature = [15, 28, 18, 5][this.season] + Math.sin(this.time * 0.1) * 5;
+    },
+
+    getLightLevel() {
+        const p = (this.time % this.dayLength) / this.dayLength;
+        if(p < 0.25) return 0.1 + p * 3;
+        if(p < 0.75) return 1.0;
+        return 1.0 - (p - 0.75) * 3;
+    },
+
+    getTimeOfDay() {
+        const p = (this.time % this.dayLength) / this.dayLength;
+        if(p < 0.25) return 'Noche';
+        if(p < 0.5) return 'Mañana';
+        if(p < 0.75) return 'Tarde';
+        return 'Noche';
+    },
+
+    getSeasonName() {
+        return ['Primavera', 'Verano', 'Otoño', 'Invierno'][this.season];
+    },
+
+    getBiomeAt(x) {
+        const ix = Math.max(0, Math.min(WORLD_WIDTH - 1, Math.floor(x)));
+        return this.biomes[ix] || 'plains';
+    },
+
+    getTerrainAt(x) {
+        const ix = Math.max(0, Math.min(WORLD_WIDTH - 1, Math.floor(x)));
+        return this.terrain[ix];
+    }
+};
+
+// ==================== HUMANOS (cliente) ====================
+let humans = [];
+let conversationLog = [];
+
+async function fetchHumans() {
+    try {
+        const res = await fetch('/humans');
+        humans = await res.json();
+
+        // También obtener estado del mundo (incluye animales)
+        const wsRes = await fetch('/world-state');
+        worldState = await wsRes.json();
+
+        // Sincronizar animales
+        if(worldState.animals) {
+            edenAnimals = worldState.animals;
+        }
+    } catch(e) {
+        console.error('Error fetching humans:', e);
+    }
+}
+
+// El servidor maneja toda la simulación automáticamente
+// El cliente solo renderiza
+
+// ==================== SIMULACIÓN ====================
+const sim = {
+    canvas: null,
+    ctx: null,
+    minimap: null,
+    minimapCtx: null,
+    paused: false,
+    speed: 1,
+    lastTime: 0,
+    cameraX: 1500,
+    thinkTimer: 0,
+    ageTimer: 0,
+
+    init() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.minimap = document.getElementById('minimap');
+        this.minimapCtx = this.minimap.getContext('2d');
+
+        this.resize();
+        window.onresize = () => this.resize();
+
+        World.init();
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            };
+        });
+
+        fetchHumans();
+        requestAnimationFrame(t => this.loop(t));
+        setInterval(() => this.updateUI(), 200);
+        setInterval(() => fetchHumans(), 1000);
+    },
+
+    resize() {
+        const container = this.canvas.parentElement;
+        this.canvas.width = container.clientWidth;
+        this.canvas.height = container.clientHeight;
+        this.minimap.width = 200;
+        this.minimap.height = 50;
+    },
+
+    loop(time) {
+        if(!this.lastTime) this.lastTime = time;
+        let dt = Math.min((time - this.lastTime) / 1000, 0.05) * this.speed;
+        this.lastTime = time;
+
+        if(!this.paused) {
+            World.update(dt);
+
+            // Cámara sigue al primer humano vivo
+            const aliveHumans = humans.filter(h => h.alive);
+            if(aliveHumans.length > 0) {
+                const target = aliveHumans[0];
+                this.cameraX += (target.x - this.canvas.width / 2 - this.cameraX) * 0.05;
+            }
+        }
+
+        this.render();
+        this.renderMinimap();
+
+        requestAnimationFrame(t => this.loop(t));
+    },
+
+    render() {
+        const c = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const light = World.getLightLevel();
+
+        // Cielo
+        const skyGrad = c.createLinearGradient(0, 0, 0, h * 0.6);
+        if(light > 0.5) {
+            skyGrad.addColorStop(0, `rgb(${80 + light*60}, ${130 + light*50}, ${180 + light*40})`);
+            skyGrad.addColorStop(1, `rgb(${160 + light*40}, ${190 + light*30}, ${210 + light*30})`);
+        } else {
+            skyGrad.addColorStop(0, `rgb(${10 + light*60}, ${15 + light*60}, ${35 + light*80})`);
+            skyGrad.addColorStop(1, `rgb(${20 + light*80}, ${30 + light*80}, ${50 + light*100})`);
+        }
+        c.fillStyle = skyGrad;
+        c.fillRect(0, 0, w, h);
+
+        // Nubes
+        c.fillStyle = `rgba(255, 255, 255, ${0.4 * light})`;
+        for(const cloud of World.clouds) {
+            const cx = cloud.x - this.cameraX * 0.3;
+            if(cx > -200 && cx < w + 200) {
+                c.beginPath();
+                c.ellipse(cx, cloud.y, cloud.width / 2, 25, 0, 0, Math.PI * 2);
+                c.fill();
+            }
+        }
+
+        // Terreno
+        const startX = Math.max(0, Math.floor(this.cameraX) - 10);
+        const endX = Math.min(WORLD_WIDTH, Math.ceil(this.cameraX + w) + 10);
+
+        // Dibujar fondo del Edén primero (resplandor dorado)
+        const edenStartX = EDEN.x1 - this.cameraX;
+        const edenEndX = EDEN.x2 - this.cameraX;
+        if(edenEndX > 0 && edenStartX < w) {
+            const edenGrad = c.createLinearGradient(edenStartX, 0, edenEndX, 0);
+            edenGrad.addColorStop(0, 'rgba(255, 220, 150, 0)');
+            edenGrad.addColorStop(0.2, 'rgba(255, 220, 150, 0.15)');
+            edenGrad.addColorStop(0.5, 'rgba(255, 230, 180, 0.2)');
+            edenGrad.addColorStop(0.8, 'rgba(255, 220, 150, 0.15)');
+            edenGrad.addColorStop(1, 'rgba(255, 220, 150, 0)');
+            c.fillStyle = edenGrad;
+            c.fillRect(Math.max(0, edenStartX), 0, Math.min(w, edenEndX) - Math.max(0, edenStartX), h);
+        }
+
+        for(let x = startX; x < endX; x++) {
+            const t = World.terrain[x];
+            const biome = World.biomes[x];
+            const sx = x - this.cameraX;
+            const groundY = h - (WORLD_HEIGHT - t.height);
+
+            let color;
+            switch(biome) {
+                case 'eden': color = '#4a9040'; break; // Verde exuberante
+                case 'beach': color = '#e8d4a8'; break;
+                case 'forest': color = '#3a6830'; break;
+                case 'plains': color = '#5a8c3a'; break;
+                case 'hills': color = '#6a8a4a'; break;
+                case 'mountains': color = '#6a6a6a'; break;
+                default: color = '#5a7a4a';
+            }
+
+            c.fillStyle = color;
+            c.fillRect(sx, groundY, 2, h - groundY);
+        }
+
+        // Río del Edén
+        if(World.edenRiver) {
+            const riverX = World.edenRiver.x - this.cameraX;
+            if(riverX > -50 && riverX < w + 50) {
+                const riverGrad = c.createLinearGradient(riverX - 20, 0, riverX + 20, 0);
+                riverGrad.addColorStop(0, 'rgba(100, 180, 220, 0.3)');
+                riverGrad.addColorStop(0.5, 'rgba(80, 160, 200, 0.7)');
+                riverGrad.addColorStop(1, 'rgba(100, 180, 220, 0.3)');
+                c.fillStyle = riverGrad;
+                c.fillRect(riverX - 20, h * 0.3, 40, h * 0.7);
+            }
+        }
+
+        // Árboles
+        for(const tree of World.trees) {
+            const tx = tree.x - this.cameraX;
+            if(tx > -50 && tx < w + 50) {
+                const groundY = h - (WORLD_HEIGHT - tree.y);
+
+                // Tronco
+                c.fillStyle = tree.type === 'fruit' ? '#5a4030' : '#4a3020';
+                c.fillRect(tx - 3, groundY - tree.height * 0.4, 6, tree.height * 0.4);
+
+                // Copa
+                if(tree.type === 'fruit') {
+                    // Árbol frutal del Edén - más grande y verde
+                    c.fillStyle = '#3a8a30';
+                    c.beginPath();
+                    c.arc(tx, groundY - tree.height * 0.65, 22, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Frutas
+                    c.fillStyle = '#e04040';
+                    for(let i = 0; i < 5; i++) {
+                        const fx = tx + Math.cos(i * 1.2) * 12;
+                        const fy = groundY - tree.height * 0.65 + Math.sin(i * 1.5) * 10;
+                        c.beginPath();
+                        c.arc(fx, fy, 4, 0, Math.PI * 2);
+                        c.fill();
+                    }
+                } else if(tree.type === 'pine') {
+                    c.fillStyle = '#2a4a2a';
+                    c.beginPath();
+                    c.moveTo(tx, groundY - tree.height);
+                    c.lineTo(tx - 15, groundY - tree.height * 0.3);
+                    c.lineTo(tx + 15, groundY - tree.height * 0.3);
+                    c.fill();
+                } else {
+                    c.fillStyle = '#3a6a30';
+                    c.beginPath();
+                    c.arc(tx, groundY - tree.height * 0.6, 15, 0, Math.PI * 2);
+                    c.fill();
+                }
+            }
+        }
+
+        // Flores en el Edén (solo si no ha caído)
+        if(edenEndX > 0 && edenStartX < w && !worldState.originalSin?.committed) {
+            for(let fx = Math.max(EDEN.x1, startX); fx < Math.min(EDEN.x2, endX); fx += 25) {
+                const flowerX = fx - this.cameraX;
+                const t = World.terrain[fx];
+                const flowerY = h - (WORLD_HEIGHT - t.height) - 5;
+
+                // Flores de colores
+                const colors = ['#ff6090', '#ffff60', '#60a0ff', '#ff9060', '#c060ff'];
+                c.fillStyle = colors[fx % colors.length];
+                c.beginPath();
+                c.arc(flowerX, flowerY, 3, 0, Math.PI * 2);
+                c.fill();
+            }
+        }
+
+        // ========== PUNTOS DE INTERÉS ==========
+        for(const poi of POINTS_OF_INTEREST) {
+            if(poi.type === 'forbidden') continue; // El árbol prohibido se renderiza aparte
+
+            const poiX = poi.x - this.cameraX;
+            if(poiX < -100 || poiX > w + 100) continue;
+
+            const poiT = World.terrain[Math.min(poi.x, WORLD_WIDTH-1)];
+            const poiGroundY = h - (WORLD_HEIGHT - poiT.height);
+
+            switch(poi.type) {
+                case 'waterfall':
+                    // Cascada
+                    c.fillStyle = 'rgba(100, 180, 220, 0.8)';
+                    c.fillRect(poiX - 8, poiGroundY - 80, 16, 80);
+                    // Rocas
+                    c.fillStyle = '#5a5a5a';
+                    c.beginPath();
+                    c.arc(poiX - 15, poiGroundY - 70, 12, 0, Math.PI * 2);
+                    c.arc(poiX + 15, poiGroundY - 75, 10, 0, Math.PI * 2);
+                    c.fill();
+                    // Bruma
+                    c.fillStyle = 'rgba(200, 230, 255, 0.4)';
+                    c.beginPath();
+                    c.arc(poiX, poiGroundY - 5, 25, 0, Math.PI * 2);
+                    c.fill();
+                    break;
+
+                case 'orchard':
+                    // Bosque de frutales (ya dibujado con árboles)
+                    c.fillStyle = '#3a8030';
+                    for(let i = 0; i < 3; i++) {
+                        const ox = poiX + (i - 1) * 25;
+                        c.beginPath();
+                        c.arc(ox, poiGroundY - 45, 18, 0, Math.PI * 2);
+                        c.fill();
+                    }
+                    break;
+
+                case 'meadow':
+                    // Pradera florida - más flores
+                    for(let i = 0; i < 10; i++) {
+                        const fx = poiX + (Math.random() - 0.5) * 60;
+                        const fy = poiGroundY - 3 - Math.random() * 8;
+                        c.fillStyle = ['#ff6090', '#ffff60', '#ff90c0', '#c060ff'][i % 4];
+                        c.beginPath();
+                        c.arc(fx, fy, 4, 0, Math.PI * 2);
+                        c.fill();
+                    }
+                    break;
+
+                case 'cave':
+                    // Cueva misteriosa
+                    c.fillStyle = '#2a2a2a';
+                    c.beginPath();
+                    c.arc(poiX, poiGroundY - 20, 30, Math.PI, 0);
+                    c.fill();
+                    // Oscuridad interior
+                    c.fillStyle = '#0a0a0a';
+                    c.beginPath();
+                    c.arc(poiX, poiGroundY - 15, 20, Math.PI, 0);
+                    c.fill();
+                    break;
+
+                case 'lake':
+                    // Lago sereno
+                    c.fillStyle = 'rgba(60, 140, 200, 0.7)';
+                    c.beginPath();
+                    c.ellipse(poiX, poiGroundY - 5, 50, 15, 0, 0, Math.PI * 2);
+                    c.fill();
+                    // Reflejo
+                    c.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                    c.beginPath();
+                    c.ellipse(poiX - 15, poiGroundY - 8, 15, 5, -0.3, 0, Math.PI * 2);
+                    c.fill();
+                    break;
+
+                case 'hill':
+                    // Colina del amanecer
+                    c.fillStyle = '#5a8a4a';
+                    c.beginPath();
+                    c.moveTo(poiX - 60, poiGroundY);
+                    c.quadraticCurveTo(poiX, poiGroundY - 50, poiX + 60, poiGroundY);
+                    c.fill();
+                    break;
+            }
+
+            // Etiqueta del POI
+            c.fillStyle = 'rgba(255, 220, 150, 0.9)';
+            c.font = 'bold 9px Georgia';
+            c.textAlign = 'center';
+            c.fillText(`${poi.emoji} ${poi.name}`, poiX, poiGroundY - 90);
+        }
+
+        // ========== ANIMALES DEL EDÉN ==========
+        for(const animal of edenAnimals) {
+            const animalX = animal.x - this.cameraX;
+            if(animalX < -50 || animalX > w + 50) continue;
+
+            const animalT = World.terrain[Math.min(animal.x, WORLD_WIDTH-1)];
+            const animalY = h - (WORLD_HEIGHT - animalT.height) - 15;
+
+            // Dibujar animal según especie
+            let emoji = '🐾';
+            let color = '#8a6a4a';
+            switch(animal.species) {
+                case 'deer': emoji = '🦌'; color = '#b08060'; break;
+                case 'rabbit': emoji = '🐰'; color = '#d0b090'; break;
+                case 'peacock': emoji = '🦚'; color = '#20a0a0'; break;
+                case 'fox': emoji = '🦊'; color = '#d06020'; break;
+                case 'dove': emoji = '🕊️'; color = '#e0e0e0'; break;
+                case 'lamb': emoji = '🐑'; color = '#f0f0f0'; break;
+            }
+
+            // Cuerpo simple
+            c.fillStyle = color;
+            c.beginPath();
+            c.ellipse(animalX, animalY, 10, 7, 0, 0, Math.PI * 2);
+            c.fill();
+
+            // Emoji encima
+            c.font = '14px sans-serif';
+            c.textAlign = 'center';
+            c.fillText(emoji, animalX, animalY - 12);
+
+            // Si tiene nombre, mostrarlo
+            if(animal.name) {
+                c.fillStyle = '#90ee90';
+                c.font = '8px Georgia';
+                c.fillText(`"${animal.name}"`, animalX, animalY + 15);
+            } else if(animal.discovered) {
+                c.fillStyle = '#ffff90';
+                c.font = '7px Georgia';
+                c.fillText('(sin nombre)', animalX, animalY + 15);
+            }
+        }
+
+        // ========== ÁRBOL PROHIBIDO ==========
+        if(!worldState.originalSin?.committed) {
+            const treeX = FORBIDDEN_TREE.x - this.cameraX;
+            if(treeX > -100 && treeX < w + 100) {
+                const treeT = World.terrain[Math.min(FORBIDDEN_TREE.x, WORLD_WIDTH-1)];
+                const treeGroundY = h - (WORLD_HEIGHT - treeT.height);
+
+                // Aura mística
+                const auraGrad = c.createRadialGradient(treeX, treeGroundY - 50, 10, treeX, treeGroundY - 50, 80);
+                auraGrad.addColorStop(0, 'rgba(255, 200, 100, 0.4)');
+                auraGrad.addColorStop(0.5, 'rgba(255, 150, 50, 0.2)');
+                auraGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+                c.fillStyle = auraGrad;
+                c.beginPath();
+                c.arc(treeX, treeGroundY - 50, 80, 0, Math.PI * 2);
+                c.fill();
+
+                // Tronco oscuro
+                c.fillStyle = '#2a1810';
+                c.fillRect(treeX - 8, treeGroundY - 80, 16, 80);
+
+                // Copa oscura con brillo
+                c.fillStyle = '#1a3020';
+                c.beginPath();
+                c.arc(treeX, treeGroundY - 100, 40, 0, Math.PI * 2);
+                c.fill();
+
+                // Frutos prohibidos (brillantes y tentadores)
+                c.fillStyle = '#ff3030';
+                c.shadowColor = '#ff6060';
+                c.shadowBlur = 10;
+                for(let i = 0; i < 7; i++) {
+                    const angle = (i / 7) * Math.PI * 2;
+                    const fx = treeX + Math.cos(angle) * 25;
+                    const fy = treeGroundY - 100 + Math.sin(angle) * 20;
+                    c.beginPath();
+                    c.arc(fx, fy, 6, 0, Math.PI * 2);
+                    c.fill();
+                }
+                c.shadowBlur = 0;
+
+                // Etiqueta
+                c.fillStyle = '#ffd700';
+                c.font = 'bold 10px Georgia';
+                c.textAlign = 'center';
+                c.fillText('🍎 ÁRBOL PROHIBIDO', treeX, treeGroundY - 150);
+            }
+
+            // ========== SERPIENTE ==========
+            if(worldState.serpentActive) {
+                const serpX = FORBIDDEN_TREE.x + 30 - this.cameraX;
+                if(serpX > -50 && serpX < w + 50) {
+                    const serpT = World.terrain[Math.min(FORBIDDEN_TREE.x + 30, WORLD_WIDTH-1)];
+                    const serpY = h - (WORLD_HEIGHT - serpT.height) - 20;
+
+                    // Cuerpo de la serpiente
+                    c.strokeStyle = '#2a5a20';
+                    c.lineWidth = 6;
+                    c.beginPath();
+                    c.moveTo(serpX - 15, serpY + 20);
+                    c.quadraticCurveTo(serpX, serpY, serpX + 10, serpY + 5);
+                    c.quadraticCurveTo(serpX + 20, serpY + 10, serpX + 15, serpY - 10);
+                    c.stroke();
+
+                    // Cabeza
+                    c.fillStyle = '#3a7a30';
+                    c.beginPath();
+                    c.arc(serpX + 15, serpY - 12, 6, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Ojos
+                    c.fillStyle = '#ff0';
+                    c.beginPath();
+                    c.arc(serpX + 17, serpY - 14, 2, 0, Math.PI * 2);
+                    c.fill();
+
+                    // Lengua
+                    c.strokeStyle = '#c00';
+                    c.lineWidth = 1;
+                    c.beginPath();
+                    c.moveTo(serpX + 20, serpY - 12);
+                    c.lineTo(serpX + 28, serpY - 10);
+                    c.moveTo(serpX + 25, serpY - 11);
+                    c.lineTo(serpX + 28, serpY - 14);
+                    c.stroke();
+
+                    c.fillStyle = '#ffa';
+                    c.font = '9px Georgia';
+                    c.fillText('🐍', serpX + 5, serpY - 25);
+                }
+            }
+        } else {
+            // Si ya cayeron, mostrar el Edén marchito/cerrado
+            const gateX = EDEN.x1 - this.cameraX;
+            if(gateX > -100 && gateX < w + 100) {
+                c.fillStyle = '#ff4444';
+                c.font = 'bold 14px Georgia';
+                c.textAlign = 'center';
+                c.fillText('⚔️ CERRADO ⚔️', gateX, h * 0.4);
+                c.font = '10px Georgia';
+                c.fillText('Expulsados del Paraíso', gateX, h * 0.4 + 15);
+            }
+        }
+
+        // Humanos
+        for(const human of humans) {
+            if(!human.alive) continue;
+
+            const hx = human.x - this.cameraX;
+            if(hx < -50 || hx > w + 50) continue;
+
+            const terrain = World.getTerrainAt(human.x);
+            const groundY = h - (WORLD_HEIGHT - terrain.height) - 35;
+
+            // Sombra
+            c.fillStyle = 'rgba(0,0,0,0.25)';
+            c.beginPath();
+            c.ellipse(hx, groundY + 38, 10, 3, 0, 0, Math.PI * 2);
+            c.fill();
+
+            // Color según género
+            const bodyColor = human.gender === 'male' ? '#c9a882' : '#d4b090';
+            const clothColor = human.gender === 'male' ? '#5a7a4a' : '#8a5a6a';
+
+            // Cuerpo
+            c.fillStyle = clothColor;
+            c.fillRect(hx - 6, groundY + 5, 12, 25);
+
+            // Cabeza
+            c.fillStyle = bodyColor;
+            c.beginPath();
+            c.arc(hx, groundY - 2, 8, 0, Math.PI * 2);
+            c.fill();
+
+            // Nombre
+            c.fillStyle = '#fff';
+            c.font = '10px Georgia';
+            c.textAlign = 'center';
+            c.fillText(human.name, hx, groundY - 15);
+
+            // Edad
+            c.fillStyle = '#aaa';
+            c.font = '8px Georgia';
+            c.fillText(`${Math.floor(human.age)} años`, hx, groundY + 48);
+
+            // Indicador de embarazo
+            if(human.pregnant) {
+                c.fillStyle = '#d4a0d4';
+                c.beginPath();
+                c.arc(hx, groundY + 15, 5, 0, Math.PI * 2);
+                c.fill();
+            }
+
+            // Burbuja de pensamiento si está pensando
+            if(human.thought && human.thought !== '...') {
+                c.fillStyle = 'rgba(255,255,255,0.9)';
+                c.beginPath();
+                c.arc(hx + 20, groundY - 25, 4, 0, Math.PI * 2);
+                c.arc(hx + 28, groundY - 32, 3, 0, Math.PI * 2);
+                c.fill();
+            }
+
+            // Indicador de meta actual
+            if(human.currentGoal) {
+                let goalEmoji = '📌';
+                switch(human.currentGoal.type) {
+                    case 'find_food': goalEmoji = '🍎'; break;
+                    case 'find_water': goalEmoji = '💧'; break;
+                    case 'explore_poi': goalEmoji = '🗺️'; break;
+                    case 'socialize': goalEmoji = '💬'; break;
+                    case 'find_mate': goalEmoji = '❤️'; break;
+                    case 'rest': goalEmoji = '😴'; break;
+                    case 'wander': goalEmoji = '🚶'; break;
+                }
+                c.font = '10px sans-serif';
+                c.textAlign = 'center';
+                c.fillText(goalEmoji, hx + 15, groundY - 8);
+            }
+        }
+    },
+
+    renderMinimap() {
+        const c = this.minimapCtx;
+        const w = 200, h = 50;
+
+        c.fillStyle = '#1a1510';
+        c.fillRect(0, 0, w, h);
+
+        // Terreno simplificado
+        const step = Math.ceil(WORLD_WIDTH / w);
+        for(let i = 0; i < w; i++) {
+            const x = i * step;
+            const t = World.terrain[Math.min(x, WORLD_WIDTH - 1)];
+            const groundY = h - (h * (WORLD_HEIGHT - t.height) / WORLD_HEIGHT);
+            c.fillStyle = '#4a6a3a';
+            c.fillRect(i, groundY, 1, h - groundY);
+        }
+
+        // Humanos
+        for(const human of humans) {
+            if(human.alive) {
+                const hx = (human.x / WORLD_WIDTH) * w;
+                c.fillStyle = human.gender === 'male' ? '#6482b4' : '#d46482';
+                c.fillRect(hx - 1, 0, 3, h);
+            }
+        }
+
+        // Vista actual
+        const viewStart = (this.cameraX / WORLD_WIDTH) * w;
+        const viewWidth = (this.canvas.width / WORLD_WIDTH) * w;
+        c.strokeStyle = '#8b7355';
+        c.strokeRect(viewStart, 0, viewWidth, h);
+    },
+
+    updateUI() {
+        const alive = humans.filter(h => h.alive);
+        const dead = humans.filter(h => !h.alive);
+
+        // Estado del Edén
+        const edenStatusEl = document.getElementById('edenStatus');
+        if(worldState.originalSin?.committed) {
+            edenStatusEl.textContent = `💔 Caídos (${worldState.originalSin.committedBy})`;
+            edenStatusEl.style.color = '#ff6666';
+        } else {
+            edenStatusEl.textContent = '🌳 En el Edén';
+            edenStatusEl.style.color = '#90ee90';
+        }
+
+        document.getElementById('season').textContent = World.getSeasonName();
+        document.getElementById('yearNum').textContent = World.year;
+        document.getElementById('timeOfDay').textContent = World.getTimeOfDay();
+        document.getElementById('population').textContent = alive.length;
+
+        // Calcular generaciones
+        let maxGen = 1;
+        for(const h of humans) {
+            let gen = 1;
+            // Simplificado: contar por nombre base
+            if(h.name !== 'Adán' && h.name !== 'Eva') gen = 2;
+            maxGen = Math.max(maxGen, gen);
+        }
+        document.getElementById('generations').textContent = maxGen;
+
+        // Tab Población
+        const popTab = document.getElementById('population-tab');
+        popTab.innerHTML = alive.map(h => {
+            // Formatear personalidad
+            const personality = h.personality || {};
+            const traitClass = (val) => val > 0.65 ? 'high' : val < 0.35 ? 'low' : '';
+            const traitLabel = (name, val) => {
+                if(!val) return '';
+                const labels = {
+                    explorerTendency: val > 0.5 ? 'Explorador' : 'Hogareño',
+                    socialTendency: val > 0.5 ? 'Social' : 'Solitario',
+                    curiosity: val > 0.5 ? 'Curioso' : 'Precavido',
+                    caution: val > 0.5 ? 'Cauteloso' : 'Audaz',
+                    talkativeness: val > 0.5 ? 'Hablador' : 'Callado'
+                };
+                return labels[name] || '';
+            };
+
+            // Formatear meta actual
+            const goalText = h.currentGoal ? (() => {
+                switch(h.currentGoal.type) {
+                    case 'find_food': return '🍎 Buscando comida';
+                    case 'find_water': return '💧 Buscando agua';
+                    case 'explore_poi': return `🗺️ Explorando ${h.currentGoal.target?.name || 'lugar'}`;
+                    case 'socialize': return `💬 Socializando`;
+                    case 'find_mate': return '❤️ Buscando pareja';
+                    case 'rest': return '😴 Descansando';
+                    case 'wander': return '🚶 Paseando';
+                    default: return `📌 ${h.currentGoal.type}`;
+                }
+            })() : '';
+
+            return `
+            <div class="human-card ${h.pregnant ? 'pregnant' : ''}">
+                <div class="human-header">
+                    <span class="human-name">
+                        ${h.name}
+                        <span class="gender">${h.gender === 'male' ? '♂' : '♀'}</span>
+                        ${h.generation ? `<small style="color:#888;font-size:9px;">(Gen ${h.generation})</small>` : ''}
+                    </span>
+                    <span class="human-age">${Math.floor(h.age)} años</span>
+                </div>
+                <div class="human-stats">
+                    <div>
+                        <small>Hambre</small>
+                        <div class="stat-bar"><div class="stat-bar-fill hunger" style="width:${h.hunger}%"></div></div>
+                    </div>
+                    <div>
+                        <small>Sed</small>
+                        <div class="stat-bar"><div class="stat-bar-fill thirst" style="width:${h.thirst}%"></div></div>
+                    </div>
+                    <div>
+                        <small>Salud</small>
+                        <div class="stat-bar"><div class="stat-bar-fill health" style="width:${h.health}%"></div></div>
+                    </div>
+                </div>
+                ${goalText ? `<div class="human-goal">${goalText}</div>` : ''}
+                <div class="human-personality">
+                    ${Object.entries(personality).map(([k, v]) =>
+                        `<span class="trait ${traitClass(v)}">${traitLabel(k, v)}</span>`
+                    ).join('')}
+                </div>
+                ${h.partner ? `<small style="color:#d4a0d4">Pareja: ${h.partner}</small>` : ''}
+                ${h.childrenCount > 0 ? `<small style="color:#a0d4a0"> | Hijos: ${h.childrenCount}</small>` : ''}
+                ${h.discoveredPOIs?.length > 0 ? `<small style="color:#90c0ff;display:block;margin-top:3px;">Lugares descubiertos: ${h.discoveredPOIs.length}</small>` : ''}
+                <div class="human-thought">"${h.thought}"</div>
+            </div>
+        `}).join('') + (dead.length > 0 ? `
+            <h4 style="color:#888;margin:15px 0 10px;">Fallecidos (${dead.length})</h4>
+            ${dead.map(h => `
+                <div class="human-card dead">
+                    <span class="human-name">${h.name}</span>
+                    <span class="human-age">† ${Math.floor(h.age)} años</span>
+                    ${h.causeOfDeath ? `<small style="color:#aa6666;margin-left:8px;">(${h.causeOfDeath})</small>` : ''}
+                </div>
+            `).join('')}
+        ` : '');
+
+        // Tab Edén (POIs y Animales)
+        const edenTab = document.getElementById('eden-tab');
+        const animalsNamed = edenAnimals.filter(a => a.name).length;
+        const animalsDiscovered = edenAnimals.filter(a => a.discovered).length;
+        edenTab.innerHTML = `
+            <div class="report-section" style="margin:5px 0;padding:10px;">
+                <h3 style="color:#d4a574;margin-bottom:10px;">🗺️ Puntos de Interés</h3>
+                ${POINTS_OF_INTEREST.map(poi => `
+                    <div style="padding:6px 10px;margin:4px 0;background:rgba(100,130,80,0.2);border-radius:4px;display:flex;justify-content:space-between;">
+                        <span>${poi.emoji} ${poi.name}</span>
+                        <span style="color:#888;font-size:10px;">${poi.type}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="report-section" style="margin:5px 0;padding:10px;">
+                <h3 style="color:#d4a574;margin-bottom:10px;">🐾 Animales del Edén (${animalsNamed}/${edenAnimals.length} nombrados)</h3>
+                ${edenAnimals.map(animal => {
+                    const emojis = { deer: '🦌', rabbit: '🐰', peacock: '🦚', fox: '🦊', dove: '🕊️', lamb: '🐑' };
+                    return `
+                    <div style="padding:6px 10px;margin:4px 0;background:rgba(${animal.name ? '100,150,100' : animal.discovered ? '150,150,80' : '80,80,80'},0.2);border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+                        <span>${emojis[animal.species] || '🐾'} ${animal.species}</span>
+                        <span style="color:${animal.name ? '#90ee90' : '#888'};">
+                            ${animal.name ? `"${animal.name}"` : animal.discovered ? '(descubierto, sin nombre)' : '(no descubierto)'}
+                        </span>
+                    </div>
+                `}).join('')}
+            </div>
+            <div class="report-section" style="margin:5px 0;padding:10px;">
+                <h3 style="color:#d4a574;margin-bottom:10px;">📖 Estado Bíblico</h3>
+                <p style="color:#a0a0a0;font-size:12px;">
+                    ${worldState.originalSin?.committed
+                        ? `💔 <span style="color:#ff6666;">Pecado Original cometido por ${worldState.originalSin.committedBy}</span><br>Los humanos han sido expulsados del Edén.`
+                        : `🌳 <span style="color:#90ee90;">En el Jardín del Edén</span><br>El Árbol Prohibido permanece intacto. La serpiente acecha...`
+                    }
+                </p>
+            </div>
+        `;
+
+        // Tab Estadísticas
+        const statsTab = document.getElementById('stats-tab');
+        statsTab.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="number">${humans.length}</div>
+                    <div class="label">Total nacidos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">${alive.length}</div>
+                    <div class="label">Vivos</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">${dead.length}</div>
+                    <div class="label">Fallecidos</div>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="number">${World.year}</div>
+                <div class="label">Año actual</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">${World.temperature.toFixed(0)}°C</div>
+                <div class="label">Temperatura</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">${animalsNamed}/${edenAnimals.length}</div>
+                <div class="label">Animales nombrados</div>
+            </div>
+        `;
+
+        // Tab Árbol Familiar
+        const familyTab = document.getElementById('family-tab');
+        familyTab.innerHTML = `
+            <div class="generation">
+                <div class="generation-title">Primera Generación (Fundadores)</div>
+                ${humans.filter(h => h.name === 'Adán' || h.name === 'Eva').map(h => `
+                    <span class="family-member ${h.gender} ${h.alive ? '' : 'dead'}">
+                        ${h.name} ${h.gender === 'male' ? '♂' : '♀'}
+                    </span>
+                `).join('')}
+            </div>
+            <div class="generation">
+                <div class="generation-title">Descendientes</div>
+                ${humans.filter(h => h.name !== 'Adán' && h.name !== 'Eva').map(h => `
+                    <span class="family-member ${h.gender} ${h.alive ? '' : 'dead'}">
+                        ${h.name} ${h.gender === 'male' ? '♂' : '♀'}
+                    </span>
+                `).join('') || '<span style="color:#888">Aún no hay descendientes</span>'}
+            </div>
+        `;
+    },
+
+    togglePause() { this.paused = !this.paused; },
+    setSpeed(s) { this.speed = s; },
+
+    async reset() {
+        await fetch('/reset', { method: 'POST' });
+        await fetchHumans();
+        World.time = 0;
+        World.day = 1;
+        World.year = 1;
+    },
+
+    async generateReport() {
+        try {
+            const res = await fetch('/report');
+            const report = await res.json();
+
+            const html = `
+                <div class="report-header">
+                    <h1>📜 INFORME DE CIVILIZACIÓN</h1>
+                    <button onclick="document.getElementById('reportModal').style.display='none'"
+                            style="background:#8b5030;color:#fff;border:none;padding:10px 20px;cursor:pointer;border-radius:5px;">
+                        Cerrar
+                    </button>
+                </div>
+
+                <div class="report-section">
+                    <h3>📊 RESUMEN GENERAL</h3>
+                    <p><strong>Día de simulación:</strong> ${report.summary.day}</p>
+                    <p><strong>Total de humanos nacidos:</strong> ${report.summary.totalBorn}</p>
+                    <p><strong>Actualmente vivos:</strong> ${report.summary.alive}</p>
+                    <p><strong>Fallecidos:</strong> ${report.summary.dead}</p>
+                    <p><strong>Generaciones:</strong> ${report.summary.maxGeneration}</p>
+                    <p><strong>Pecado Original:</strong> ${report.summary.sinCommitted ? `✅ Cometido por ${report.summary.sinBy}` : '❌ No cometido'}</p>
+                </div>
+
+                <div class="report-section">
+                    <h3>👥 POBLACIÓN POR GENERACIONES</h3>
+                    ${Object.entries(report.generations).map(([gen, members]) => `
+                        <div style="margin:10px 0;padding:8px;background:rgba(100,100,100,0.2);border-radius:4px;">
+                            <strong>Generación ${gen}</strong> (${members.length} personas)
+                            <div style="margin-top:5px;">
+                                ${members.map(m => `
+                                    <span style="display:inline-block;margin:2px 5px;padding:3px 8px;background:${m.alive ? 'rgba(100,150,100,0.3)' : 'rgba(100,100,100,0.3)'};border-radius:3px;">
+                                        ${m.name} ${m.gender === 'male' ? '♂' : '♀'} (${m.age}${m.alive ? '' : '†'})
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="report-section">
+                    <h3>👤 POBLACIÓN DETALLADA</h3>
+                    ${report.population.map(p => `
+                        <div class="person-report">
+                            <h4>${p.name} ${p.gender === 'male' ? '♂' : '♀'} - ${p.age} años ${p.alive ? '(vivo)' : '(fallecido)'}</h4>
+                            <p><strong>Generación:</strong> ${p.generation}</p>
+                            ${p.parents ? `<p><strong>Padres:</strong> ${p.parents.father} y ${p.parents.mother}</p>` : '<p><em>Sin padres (fundador)</em></p>'}
+                            ${p.partner ? `<p><strong>Pareja:</strong> ${p.partner}</p>` : ''}
+                            ${p.children.length > 0 ? `<p><strong>Hijos:</strong> ${p.children.join(', ')}</p>` : ''}
+                            <p><strong>Último pensamiento:</strong> "${p.lastThought}"</p>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="report-section">
+                    <h3>💬 CONVERSACIONES RECIENTES</h3>
+                    ${report.conversations.length === 0 ? '<p>No hay conversaciones registradas.</p>' :
+                      report.conversations.map(c => `
+                        <div class="conversation">
+                            <span class="from">${c.from}</span> → <span class="to">${c.to}</span>
+                            <div class="message">"${c.msg}"</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                ${report.animals.length > 0 ? `
+                <div class="report-section">
+                    <h3>🐾 ANIMALES NOMBRADOS</h3>
+                    ${report.animals.map(a => `<p>🏷️ ${a.species}: "${a.name}"</p>`).join('')}
+                </div>
+                ` : ''}
+            `;
+
+            document.getElementById('reportContent').innerHTML = html;
+            document.getElementById('reportModal').style.display = 'block';
+
+        } catch(e) {
+            console.error('Error generating report:', e);
+            alert('Error al generar informe: ' + e.message);
+        }
+    }
+};
+
+window.onload = () => sim.init();
+</script>
+</body>
+</html>
