@@ -463,48 +463,48 @@ MIT - Use freely for research, education, or curiosity.
 
 ---
 
-## Conexiones
+## Connections
 
 <table>
 <tr>
 <td width="50%">
 
-### La pregunta filosófica
+### The philosophical question
 
-> *"¿Estamos programados para actuar como lo hacemos, o realmente elegimos?"*
+> *"Are we programmed to act the way we do, or do we truly choose?"*
 
-Adam eligió desobedecer. Abel eligió seguir adelante. ¿Son diferentes?
+Adam chose to disobey. Abel chose to keep going. Are they different?
 
-**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** explora si el libre albedrío existe o todo está predeterminado. Genesis Simulation es el experimento práctico de esa pregunta.
+**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** explores whether free will exists or everything is predetermined. Genesis Simulation is the practical experiment of that question.
 
 </td>
 <td width="50%">
 
-### La decisión humana
+### The human decision
 
-> *"Hoy tuve un pensamiento malo, cinturón al techo... Eso no va a pasar."*
+> *"Today I had a bad thought, belt to the ceiling... That's not going to happen."*
 
-En **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel elige seguir adelante en el Día 30. Adam eligió desobedecer en el Día 1. Ambos tomaron decisiones que definieron todo lo que vino después.
+In **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel chooses to keep going on Day 30. Adam chose to disobey on Day 1. Both made decisions that defined everything that came after.
 
 </td>
 </tr>
 <tr>
 <td>
 
-### La física del libre albedrío
+### The physics of free will
 
-Si el presente contiene toda la información del pasado y futuro, ¿Adam estaba destinado a caer?
+If the present contains all information from past and future, was Adam destined to fall?
 
-**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** investiga si la información se conserva o se destruye. Si se conserva, ¿la "elección" de Adam ya estaba codificada?
+**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** investigates whether information is conserved or destroyed. If conserved, was Adam's "choice" already encoded?
 
 </td>
 <td>
 
-### IA descubriendo leyes
+### AI discovering laws
 
-Adam nombró todos los animales. La IA de **[Physics Discovery](https://github.com/gamogestionweb/physics-discovery-ai)** descubre las leyes de la física.
+Adam named all the animals. The AI in **[Physics Discovery](https://github.com/gamogestionweb/physics-discovery-ai)** discovers the laws of physics.
 
-Ambos hacen lo mismo: dar estructura al caos, encontrar patrones, crear conocimiento.
+Both do the same thing: give structure to chaos, find patterns, create knowledge.
 
 </td>
 </tr>
