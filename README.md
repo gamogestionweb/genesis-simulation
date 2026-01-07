@@ -463,6 +463,55 @@ MIT - Use freely for research, education, or curiosity.
 
 ---
 
+## Conexiones
+
+<table>
+<tr>
+<td width="50%">
+
+### La pregunta filosófica
+
+> *"¿Estamos programados para actuar como lo hacemos, o realmente elegimos?"*
+
+Adam eligió desobedecer. Abel eligió seguir adelante. ¿Son diferentes?
+
+**[Are You There Reading?](https://github.com/gamogestionweb/Are-you-there-are-reading)** explora si el libre albedrío existe o todo está predeterminado. Genesis Simulation es el experimento práctico de esa pregunta.
+
+</td>
+<td width="50%">
+
+### La decisión humana
+
+> *"Hoy tuve un pensamiento malo, cinturón al techo... Eso no va a pasar."*
+
+En **[100 Días de una Vida](https://github.com/gamogestionweb/100-dias-de-una-vida)**, Abel elige seguir adelante en el Día 30. Adam eligió desobedecer en el Día 1. Ambos tomaron decisiones que definieron todo lo que vino después.
+
+</td>
+</tr>
+<tr>
+<td>
+
+### La física del libre albedrío
+
+Si el presente contiene toda la información del pasado y futuro, ¿Adam estaba destinado a caer?
+
+**[PCP Universe](https://github.com/gamogestionweb/pcp-universe)** investiga si la información se conserva o se destruye. Si se conserva, ¿la "elección" de Adam ya estaba codificada?
+
+</td>
+<td>
+
+### IA descubriendo leyes
+
+Adam nombró todos los animales. La IA de **[Physics Discovery](https://github.com/gamogestionweb/physics-discovery-ai)** descubre las leyes de la física.
+
+Ambos hacen lo mismo: dar estructura al caos, encontrar patrones, crear conocimiento.
+
+</td>
+</tr>
+</table>
+
+---
+
 ## Credits
 
 - **Experiment Design & Development**: Created with Claude Code assistance
