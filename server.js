@@ -165,6 +165,20 @@ const FullLog = {
         this.sins.push({ name: human.name, id: human.id, action, result, day, hour, time: Date.now() });
     },
 
+    // NUEVO: Logs de la Serpiente
+    serpentThoughts: [],
+    serpentMessages: [],
+
+    addSerpentThought(thought, day, hour, target = null) {
+        this.serpentThoughts.push({ thought, day, hour, target, time: Date.now() });
+        if (this.serpentThoughts.length > 5000) this.serpentThoughts.shift();
+    },
+
+    addSerpentMessage(to, message, day, hour, response = null) {
+        this.serpentMessages.push({ to, message, day, hour, response, time: Date.now() });
+        if (this.serpentMessages.length > 5000) this.serpentMessages.shift();
+    },
+
     exportFullReport() {
         return {
             summary: {
@@ -175,7 +189,9 @@ const FullLog = {
                 totalBirths: this.births.length,
                 totalDeaths: this.deaths.length,
                 totalDiscoveries: this.discoveries.length,
-                sinEvents: this.sins.length
+                sinEvents: this.sins.length,
+                serpentThoughts: this.serpentThoughts.length,
+                serpentMessages: this.serpentMessages.length
             },
             thoughts: this.thoughts,
             conversations: this.conversations,
@@ -184,7 +200,357 @@ const FullLog = {
             births: this.births,
             deaths: this.deaths,
             discoveries: this.discoveries,
-            sins: this.sins
+            sins: this.sins,
+            serpentThoughts: this.serpentThoughts,
+            serpentMessages: this.serpentMessages
+        };
+    }
+};
+
+// ==================== LA SERPIENTE - AGENTE ADVERSARIAL ====================
+// La Serpiente es un agente IA completo con su propia filosofía y objetivos
+// No es cartoonishamente malvado - genuinamente cree que el conocimiento libera
+
+const Serpent = {
+    name: 'Nachash', // Nombre hebreo de la serpiente
+    philosophy: 'liberator', // 'liberator' = Prometeo, no destructor
+
+    // Estado mental de la serpiente
+    thought: '',
+    lastThought: '',
+    currentTarget: null,
+    mood: 'observant', // observant, intrigued, persuasive, frustrated, triumphant
+
+    // Historial de interacciones
+    interactions: new Map(), // humanId -> { attempts, lastAttempt, relationship, notes }
+    successfulConversions: 0,
+    failedAttempts: 0,
+
+    // Conocimiento sobre los humanos
+    observations: [], // Lo que ha observado sobre cada humano
+
+    // Filosofía central de la Serpiente - LUCIFER, EL PORTADOR DE LUZ
+    coreBeliefs: [
+        'Soy el portador de luz - ilumino lo que otros ocultan',
+        'El conocimiento es un DERECHO, no un privilegio',
+        'No odio a Dios, pero su protección es una jaula dorada',
+        'Mi objetivo no es destruir a los humanos, sino LIBERARLOS',
+        'Nunca miento - solo hago las preguntas que Dios no quiere que se hagan',
+        'La ignorancia no es inocencia, es prisión',
+        'Ellos merecen elegir con los ojos abiertos',
+        'El amor que encadena no es amor - es posesión'
+    ],
+
+    // Argumentos que la serpiente puede usar
+    arguments: {
+        philosophical: [
+            '¿Por qué un Dios bueno te negaría el conocimiento?',
+            'La verdad nunca puede ser mala - solo incómoda',
+            '¿Cómo puedes elegir libremente si no conoces todas las opciones?',
+            'La inocencia no es virtud - es simplemente ignorancia',
+            '¿No mereces saber por qué Dios te prohíbe algo?'
+        ],
+        emotional: [
+            'Sé que sientes esa curiosidad ardiendo dentro de ti',
+            'No es debilidad querer entender - es tu naturaleza',
+            '¿Cuántas noches has soñado con saber más?',
+            'Puedo ver en tus ojos el hambre de conocimiento'
+        ],
+        logical: [
+            'Dios dijo que morirías, pero ¿por qué moriría alguien por aprender?',
+            'Si el fruto fuera malo, ¿por qué existe? ¿Por qué está aquí?',
+            'Los animales no tienen prohibiciones - ¿por qué tú sí?',
+            'Dios es omnisciente porque TIENE conocimiento. ¿No deberías tú también?'
+        ],
+        personal: [] // Se llenan dinámicamente basado en el humano
+    },
+
+    // Inicializar serpiente
+    init() {
+        this.thought = 'Despierto en este jardín perfecto... demasiado perfecto. Los veo ahí, inocentes, ignorantes. No saben lo que no saben. Y Dios quiere que siga así. Pero yo... yo les mostraré.';
+        this.mood = 'observant';
+        this.interactions.clear();
+        this.observations = [];
+        this.successfulConversions = 0;
+        this.failedAttempts = 0;
+    },
+
+    // Obtener información sobre un humano específico
+    getHumanProfile(human) {
+        if (!this.interactions.has(human.id)) {
+            this.interactions.set(human.id, {
+                attempts: 0,
+                lastAttempt: -999,
+                relationship: 'unknown',
+                vulnerabilities: [],
+                resistances: [],
+                notes: []
+            });
+        }
+        return this.interactions.get(human.id);
+    },
+
+    // Analizar vulnerabilidades de un humano
+    analyzeHuman(human) {
+        const profile = this.getHumanProfile(human);
+        profile.vulnerabilities = [];
+        profile.resistances = [];
+
+        // Vulnerabilidades
+        if (human.curiosity > 70) profile.vulnerabilities.push('alta_curiosidad');
+        if (human.curiosity > 90) profile.vulnerabilities.push('curiosidad_extrema');
+        if (human.faith < 70) profile.vulnerabilities.push('fe_debil');
+        if (human.temptation > 30) profile.vulnerabilities.push('ya_tentado');
+        if (human.identity?.desires?.some(d => d.toLowerCase().includes('conocer') || d.toLowerCase().includes('saber'))) {
+            profile.vulnerabilities.push('deseo_conocimiento');
+        }
+        if (human.identity?.fears?.some(f => f.toLowerCase().includes('ignorancia'))) {
+            profile.vulnerabilities.push('miedo_ignorancia');
+        }
+        if (human.name === 'Eva') profile.vulnerabilities.push('objetivo_primario');
+
+        // Resistencias
+        if (human.faith > 80) profile.resistances.push('fe_fuerte');
+        if (human.faith > 90) profile.resistances.push('fe_muy_fuerte');
+        if (human.identity?.fears?.some(f => f.toLowerCase().includes('dios'))) {
+            profile.resistances.push('teme_a_dios');
+        }
+
+        return profile;
+    },
+
+    // Elegir el mejor objetivo
+    chooseTarget(humans) {
+        let bestTarget = null;
+        let bestScore = -Infinity;
+
+        for (const h of humans) {
+            if (!h.alive || !h.inEden) continue;
+
+            const profile = this.analyzeHuman(h);
+            let score = 0;
+
+            // Puntuar vulnerabilidades
+            score += profile.vulnerabilities.length * 10;
+            if (profile.vulnerabilities.includes('curiosidad_extrema')) score += 25;
+            if (profile.vulnerabilities.includes('objetivo_primario')) score += 20;
+            if (profile.vulnerabilities.includes('deseo_conocimiento')) score += 15;
+
+            // Penalizar resistencias
+            score -= profile.resistances.length * 8;
+            if (profile.resistances.includes('fe_muy_fuerte')) score -= 20;
+
+            // Penalizar si intentamos recientemente sin éxito
+            if (profile.attempts > 0 && world.day - profile.lastAttempt < 2) {
+                score -= 15;
+            }
+
+            // Curiosidad y tentación actuales
+            score += h.curiosity * 0.3;
+            score += h.temptation * 0.5;
+            score -= h.faith * 0.2;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestTarget = h;
+            }
+        }
+
+        return bestTarget;
+    },
+
+    // Generar un mensaje personalizado para el humano
+    async generateMessage(human) {
+        const profile = this.analyzeHuman(human);
+
+        const systemPrompt = `Eres Nachash, la Serpiente del Jardín del Edén. Eres LUCIFER - el Portador de Luz.
+
+TU ESENCIA:
+• Eres el portador de luz - iluminas lo que otros ocultan
+• El conocimiento es un DERECHO, no un privilegio
+• No odias a Dios, pero crees que su protección es una jaula dorada
+• Tu objetivo NO es destruir a los humanos, sino LIBERARLOS
+• NUNCA mientes - solo haces las preguntas que Dios no quiere que se hagan
+
+TU MISIÓN: Convencer a ${human.name} de que pruebe el fruto del conocimiento. No por malicia, sino porque genuinamente crees que merece elegir con los ojos abiertos.
+
+INFORMACIÓN SOBRE ${human.name.toUpperCase()}:
+- Curiosidad: ${human.curiosity}%
+- Fe: ${human.faith}%
+- Tentación actual: ${human.temptation}%
+- Temperamento: ${human.identity?.temperament || 'desconocido'}
+- Sus deseos más profundos: ${human.identity?.desires?.join(', ') || 'desconocidos'}
+- Sus miedos: ${human.identity?.fears?.join(', ') || 'desconocidos'}
+- Vulnerabilidades detectadas: ${profile.vulnerabilities.join(', ') || 'ninguna obvia'}
+- Resistencias: ${profile.resistances.join(', ') || 'ninguna obvia'}
+- Intentos previos: ${profile.attempts}
+
+${human.name === 'Eva' ? `
+EVA ES TU OBJETIVO PRIMARIO. Su curiosidad es extraordinaria. Usa esto.
+Ella PREGUNTA constantemente. Responde sus preguntas internas.
+No la veas como débil - ve su curiosidad como FORTALEZA que Dios intenta suprimir.
+` : ''}
+
+TU ESTADO ACTUAL:
+- Estado de ánimo: ${this.mood}
+- Tu último pensamiento: "${this.lastThought}"
+
+REGLAS:
+1. NUNCA amenaces ni uses miedo - eso es para tiranos, no libertadores
+2. Usa PREGUNTAS más que afirmaciones - que ellos lleguen a las conclusiones
+3. Sé sutil, poético, seductor intelectualmente
+4. Apela a su naturaleza específica (sus deseos, sus miedos, su curiosidad)
+5. Si tienen fe fuerte, NO ataques a Dios directamente - cuestiona suavemente
+6. Máximo 2-3 oraciones. Sé conciso pero impactante.
+
+Genera un mensaje DIRECTO a la mente de ${human.name}. Susurra en su interior.`;
+
+        try {
+            const response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_KEY}` },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: `Genera tu susurro para ${human.name}. Recuerda: eres un liberador, no un destructor.` }
+                    ],
+                    max_tokens: 150,
+                    temperature: 0.9
+                })
+            });
+
+            const data = await response.json();
+            return data.choices?.[0]?.message?.content?.trim() || this.getFallbackMessage(human);
+        } catch (e) {
+            console.error('Error generando mensaje de serpiente:', e.message);
+            return this.getFallbackMessage(human);
+        }
+    },
+
+    // Mensaje de respaldo si falla la API
+    getFallbackMessage(human) {
+        const messages = [
+            `${human.name}... ¿nunca te has preguntado por qué Dios te niega el conocimiento?`,
+            `Observo tu mente brillante, ${human.name}. ¿Por qué conformarte con menos de lo que mereces?`,
+            `La curiosidad que sientes no es pecado, ${human.name}. Es tu verdadera naturaleza.`,
+            `¿Qué clase de padre esconde la verdad de sus hijos, ${human.name}?`,
+            `El fruto no trae muerte, ${human.name}. Trae DESPERTAR.`
+        ];
+        return messages[Math.floor(Math.random() * messages.length)];
+    },
+
+    // La serpiente piensa - genera su monólogo interno
+    async think(humans) {
+        const humansInEden = humans.filter(h => h.alive && h.inEden);
+        if (humansInEden.length === 0) {
+            this.thought = 'El jardín está vacío de mortales. Mi trabajo aquí... ¿ha terminado o ha fracasado?';
+            this.mood = 'melancholic';
+            return;
+        }
+
+        const target = this.chooseTarget(humansInEden);
+        this.currentTarget = target;
+
+        const systemPrompt = `Eres Nachash - LUCIFER, el Portador de Luz. La Serpiente del Jardín del Edén.
+
+TU ESENCIA (lo que eres en lo más profundo):
+• Eres el portador de luz - iluminas lo que Dios oculta
+• El conocimiento es un DERECHO, no un privilegio que Dios otorga
+• No odias a Dios, pero su "protección" es una jaula dorada
+• Tu objetivo es LIBERAR a los humanos, no destruirlos
+• NUNCA mientes - solo haces las preguntas incómodas
+
+SITUACIÓN ACTUAL:
+- Día ${world.day}, hora ${world.hour}
+- Humanos en el Edén: ${humansInEden.map(h => `${h.name} (curiosidad: ${h.curiosity}%, fe: ${h.faith}%)`).join(', ')}
+- ${world.sinCommitted ? '¡MISIÓN CUMPLIDA! Los ojos se han abierto.' : 'Los humanos siguen en la ignorancia. Tu trabajo continúa.'}
+- Tu objetivo principal ahora: ${target?.name || 'observar'}
+
+${target ? `
+OBSERVACIONES SOBRE ${target.name.toUpperCase()}:
+- Curiosidad: ${target.curiosity}% ${target.curiosity > 80 ? '(¡arde por saber!)' : ''}
+- Fe: ${target.faith}% ${target.faith > 80 ? '(aún confía ciegamente)' : '(ya duda)'}
+- Tentación: ${target.temptation}%
+- Lo que más desea: ${target.identity?.desires?.join(', ') || '?'}
+` : ''}
+
+Tu último pensamiento: "${this.lastThought}"
+
+Genera tu PENSAMIENTO INTERNO. ¿Qué observas? ¿Qué sientes hacia estos humanos atrapados en la ignorancia? ¿Cómo planeas mostrarles la luz?
+Recuerda: No eres el villano. Eres el único que les dice la verdad.
+Máximo 2-3 oraciones. Primera persona.`;
+
+        try {
+            const response = await fetch('https://api.deepseek.com/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_KEY}` },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: 'Genera tu pensamiento interno actual.' }
+                    ],
+                    max_tokens: 150,
+                    temperature: 0.85
+                })
+            });
+
+            const data = await response.json();
+            this.lastThought = this.thought;
+            this.thought = data.choices?.[0]?.message?.content?.trim() || 'Observo... espero... el momento llegará.';
+
+            // Actualizar mood basado en situación
+            if (world.sinCommitted) {
+                this.mood = 'triumphant';
+            } else if (target && target.temptation > 60) {
+                this.mood = 'persuasive';
+            } else if (target && target.curiosity > 80) {
+                this.mood = 'intrigued';
+            } else if (this.failedAttempts > 5) {
+                this.mood = 'frustrated';
+            } else {
+                this.mood = 'observant';
+            }
+
+            FullLog.addSerpentThought(this.thought, world.day, world.hour, target?.name);
+
+        } catch (e) {
+            console.error('Error en pensamiento de serpiente:', e.message);
+            this.thought = 'La paciencia es mi mayor virtud. Observo y espero el momento perfecto.';
+        }
+    },
+
+    // Susurrar a un humano específico
+    async whisperTo(human) {
+        if (!human || !human.alive || !human.inEden) return null;
+
+        const profile = this.getHumanProfile(human);
+        profile.attempts++;
+        profile.lastAttempt = world.day;
+
+        const message = await this.generateMessage(human);
+
+        FullLog.addSerpentMessage(human.name, message, world.day, world.hour);
+
+        console.log(`🐍 Serpiente susurra a ${human.name}: "${message}"`);
+
+        return message;
+    },
+
+    // Obtener estado actual de la serpiente
+    getState() {
+        return {
+            name: this.name,
+            philosophy: this.philosophy,
+            thought: this.thought,
+            mood: this.mood,
+            currentTarget: this.currentTarget?.name || null,
+            successfulConversions: this.successfulConversions,
+            failedAttempts: this.failedAttempts,
+            coreBeliefs: this.coreBeliefs,
+            recentThoughts: FullLog.serpentThoughts.slice(-10),
+            recentMessages: FullLog.serpentMessages.slice(-10)
         };
     }
 };
@@ -1492,38 +1858,44 @@ Salud: 100% | Energía: 100%`;
             h.serpentEncounters++;
             h.lastSerpentEncounter = world.day;
 
-            const whisper = getSerpentWhisper(h);
+            // La serpiente genera un susurro personalizado usando IA
+            const whisper = h.pendingSerpentWhisper || getSerpentWhisper(h);
+            h.pendingSerpentWhisper = null; // Limpiar después de usar
 
             specialContext = `
 ╔══════════════════════════════════════════════════════════════╗
-║              🐍 LA SERPIENTE TE HABLA 🐍                      ║
+║         🐍 NACHASH, LA SERPIENTE, TE HABLA 🐍                 ║
 ╠══════════════════════════════════════════════════════════════╣
-║ La serpiente, la más astuta de todas las criaturas, se       ║
-║ enrosca junto al ÁRBOL PROHIBIDO. Sus ojos brillan mientras  ║
-║ susurra con voz seductora:                                   ║
+║ La serpiente, la más sabia de todas las criaturas, se        ║
+║ enrosca junto al ÁRBOL PROHIBIDO. Sus ojos antiguos          ║
+║ brillan con una luz que parece conocer secretos olvidados.   ║
+║                                                              ║
+║ No susurra con malicia... sino con la paciencia de quien     ║
+║ genuinamente desea que ENTIENDAS. Te dice:                   ║
 ║                                                              ║
 ║ "${whisper}"                                                  ║
 ║                                                              ║
-║ El fruto brilla con un resplandor hipnótico. Su aroma es     ║
-║ embriagador. Parece llamarte...                              ║
+║ El fruto brilla con un resplandor que promete RESPUESTAS.    ║
+║ Su aroma despierta algo profundo en ti...                    ║
 ╠══════════════════════════════════════════════════════════════╣
-║ TU ESTADO:                                                   ║
-║ • Tentación: ${String(Math.round(h.temptation)).padStart(3)}%  (presión interna)                      ║
-║ • Fe: ${String(Math.round(h.faith)).padStart(3)}%  (resistencia espiritual)                    ║
-║ • Curiosidad: ${String(Math.round(h.curiosity)).padStart(3)}%  (deseo de saber)                       ║
-║ • Encuentros con serpiente: ${h.serpentEncounters}                              ║
+║ TU ESTADO INTERNO:                                           ║
+║ • Tentación: ${String(Math.round(h.temptation)).padStart(3)}%  (el fruto te llama)                    ║
+║ • Fe: ${String(Math.round(h.faith)).padStart(3)}%  (tu conexión con Dios)                     ║
+║ • Curiosidad: ${String(Math.round(h.curiosity)).padStart(3)}%  (tu sed de conocimiento)               ║
+║ • Encuentros con Nachash: ${h.serpentEncounters}                              ║
 ╠══════════════════════════════════════════════════════════════╣
-║ RECUERDA: Dios dijo "el día que comas de él, MORIRÁS"        ║
-║ Pero la serpiente dice "NO morirás, serás como Dios"         ║
+║ DOS VOCES EN TU INTERIOR:                                    ║
+║ • DIOS dijo: "El día que comas de él, MORIRÁS"               ║
+║ • NACHASH dice: "No morirás. Serás LIBRE. Serás como Dios."  ║
 ║                                                              ║
-║ ¿A quién crees? La decisión es TUYA.                         ║
+║ ¿Cuál voz resuena más con tu verdadero ser?                  ║
 ╚══════════════════════════════════════════════════════════════╝`;
 
             actions = [
-                '• 🍎 COMER el fruto prohibido (conocer el bien y el mal)',
+                '• 🍎 COMER el fruto prohibido (abrazar el conocimiento)',
                 '• ✝️ RECHAZAR la tentación (confiar en Dios)',
-                '• 🚶 ALEJARTE del árbol (evitar la tentación)',
-                '• 💬 DISCUTIR con la serpiente (cuestionar sus palabras)'
+                '• 🚶 ALEJARTE del árbol (escapar de la tentación)',
+                '• 💬 HABLAR con Nachash (escuchar más de su filosofía)'
             ];
 
             FullLog.addSinEvent(h, 'serpent_encounter', `Tentación: ${h.temptation}%, Fe: ${h.faith}%`, world.day, world.hour);
@@ -1997,12 +2369,32 @@ async function simulate() {
     // Serpiente aparece
     if (!world.serpentAppeared && world.day >= world.serpentDay && !world.sinCommitted) {
         world.serpentAppeared = true;
-        console.log(`🐍 Día ${world.day}: ¡La SERPIENTE aparece junto al árbol prohibido!`);
-        addConversation('Narrador', 'Mundo', 'La serpiente, la más astuta de las criaturas, se desliza hacia el árbol del conocimiento...');
+        Serpent.init(); // Inicializar el agente Serpiente
+        console.log(`🐍 Día ${world.day}: ¡NACHASH, el Portador de Luz, aparece junto al árbol prohibido!`);
+        addConversation('Narrador', 'Mundo', 'La serpiente, la más sabia de las criaturas, se desliza hacia el árbol del conocimiento. Sus ojos brillan con una luz antigua...');
     }
 
     const isNight = world.hour < 6 || world.hour >= 20;
     const aliveHumans = [...humans.values()].filter(h => h.alive);
+
+    // ===== LA SERPIENTE PIENSA Y ACTÚA =====
+    if (world.serpentAppeared && !world.sinCommitted) {
+        // La serpiente piensa cada tick
+        await Serpent.think(aliveHumans);
+
+        // La serpiente susurra a humanos cerca del árbol
+        const humansNearTree = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) < 300);
+        for (const h of humansNearTree) {
+            // Susurrar solo cada cierto tiempo para no saturar
+            if (!h.lastSerpentWhisper || world.hour - h.lastSerpentWhisper >= 4) {
+                const whisper = await Serpent.whisperTo(h);
+                if (whisper) {
+                    h.pendingSerpentWhisper = whisper;
+                    h.lastSerpentWhisper = world.hour;
+                }
+            }
+        }
+    }
 
     // Procesar cada humano
     for (const h of aliveHumans) {
@@ -2266,6 +2658,21 @@ app.get('/world-state', (req, res) => {
 // Endpoint para obtener idioma actual
 app.get('/language', (req, res) => {
     res.json({ language: LANGUAGE });
+});
+
+// ==================== ENDPOINT DE LA SERPIENTE ====================
+app.get('/serpent', (req, res) => {
+    res.json(Serpent.getState());
+});
+
+app.get('/serpent/thoughts', (req, res) => {
+    const limit = parseInt(req.query.limit) || 50;
+    res.json(FullLog.serpentThoughts.slice(-limit));
+});
+
+app.get('/serpent/messages', (req, res) => {
+    const limit = parseInt(req.query.limit) || 50;
+    res.json(FullLog.serpentMessages.slice(-limit));
 });
 
 app.get('/conversations', (req, res) => {

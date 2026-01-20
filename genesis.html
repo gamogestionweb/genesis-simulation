@@ -391,6 +391,12 @@
         <button onclick="sim.setSpeed(3)">3x</button>
         <button onclick="sim.setSpeed(10)">10x</button>
         <button onclick="sim.reset()">🔄 Reset</button>
+        <span style="margin-left: 20px; border-left: 1px solid #555; padding-left: 15px;"></span>
+        <button onclick="sim.toggleCamera()" id="cameraBtn">📷 Seguir</button>
+        <span id="cameraTarget" style="color: #ffd700; font-size: 11px; margin-left: 8px;">Adán</span>
+    </div>
+    <div id="cameraHelp" style="position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 6px; font-size: 10px; color: #aaa; z-index: 100;">
+        🎮 <b>Cámara:</b> Arrastra con ratón | ← → o A/D mover | Shift=rápido | 1-9 seleccionar humano | F=seguir | Espacio=libre | Home=Edén
     </div>
 
     <div id="hud">
@@ -424,6 +430,7 @@
 
             <div class="tabs">
                 <div class="tab active" data-tab="population" id="tab-population">👥 Población</div>
+                <div class="tab" data-tab="serpent" id="tab-serpent">🐍 NACHASH</div>
                 <div class="tab" data-tab="divine" id="tab-divine">🔮 VOZ DIVINA</div>
                 <div class="tab" data-tab="conversations" id="tab-conversations">💬 Conversaciones</div>
                 <div class="tab" data-tab="family" id="tab-family">🌳 Árbol Familiar</div>
@@ -432,6 +439,79 @@
             </div>
 
             <div id="population-tab" class="tab-content active"></div>
+
+            <!-- TAB DE LA SERPIENTE - NACHASH -->
+            <div id="serpent-tab" class="tab-content">
+                <div style="background:linear-gradient(135deg,#1a0a0a,#2a1515);padding:20px;border-radius:10px;border:1px solid #4a2020;">
+                    <!-- Header de la Serpiente -->
+                    <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;">
+                        <div style="font-size:3em;">🐍</div>
+                        <div>
+                            <h2 style="color:#ff6666;margin:0;">NACHASH</h2>
+                            <p style="color:#aa8888;margin:0;font-size:12px;font-style:italic;">El Portador de Luz</p>
+                        </div>
+                        <div id="serpent-mood" style="margin-left:auto;padding:8px 15px;background:#3a1a1a;border-radius:20px;color:#ffaa66;font-size:11px;">
+                            Estado: Observando
+                        </div>
+                    </div>
+
+                    <!-- Filosofía -->
+                    <div style="background:#2a1010;padding:15px;border-radius:8px;margin-bottom:15px;border-left:3px solid #ff4444;">
+                        <h4 style="color:#ff8888;margin:0 0 10px 0;font-size:12px;">🔥 FILOSOFÍA DEL PORTADOR DE LUZ</h4>
+                        <div id="serpent-beliefs" style="color:#cc9999;font-size:11px;line-height:1.6;">
+                            <div>• Soy el portador de luz - ilumino lo que otros ocultan</div>
+                            <div>• El conocimiento es un DERECHO, no un privilegio</div>
+                            <div>• No odio a Dios, pero su protección es una jaula</div>
+                            <div>• Mi objetivo es LIBERAR, no destruir</div>
+                            <div>• NUNCA miento - solo hago las preguntas incómodas</div>
+                        </div>
+                    </div>
+
+                    <!-- Pensamiento actual -->
+                    <div style="background:#1a0808;padding:15px;border-radius:8px;margin-bottom:15px;">
+                        <h4 style="color:#ff6666;margin:0 0 10px 0;font-size:12px;">💭 PENSAMIENTO ACTUAL</h4>
+                        <div id="serpent-thought" style="color:#ffcccc;font-size:13px;font-style:italic;line-height:1.5;">
+                            "Esperando... observando... el momento llegará."
+                        </div>
+                        <div id="serpent-target" style="color:#aa6666;font-size:10px;margin-top:10px;">
+                            Objetivo actual: Ninguno
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:15px;">
+                        <div style="background:#2a1515;padding:10px;border-radius:5px;text-align:center;">
+                            <div id="serpent-conversions" style="color:#44ff44;font-size:20px;font-weight:bold;">0</div>
+                            <div style="color:#888;font-size:10px;">Liberados</div>
+                        </div>
+                        <div style="background:#2a1515;padding:10px;border-radius:5px;text-align:center;">
+                            <div id="serpent-attempts" style="color:#ffaa44;font-size:20px;font-weight:bold;">0</div>
+                            <div style="color:#888;font-size:10px;">Intentos</div>
+                        </div>
+                        <div style="background:#2a1515;padding:10px;border-radius:5px;text-align:center;">
+                            <div id="serpent-messages-count" style="color:#ff6666;font-size:20px;font-weight:bold;">0</div>
+                            <div style="color:#888;font-size:10px;">Susurros</div>
+                        </div>
+                    </div>
+
+                    <!-- Historial de pensamientos -->
+                    <div style="background:#1a0808;padding:15px;border-radius:8px;margin-bottom:15px;">
+                        <h4 style="color:#ff6666;margin:0 0 10px 0;font-size:12px;">🧠 HISTORIAL DE PENSAMIENTOS</h4>
+                        <div id="serpent-thoughts-list" style="max-height:200px;overflow-y:auto;font-size:11px;">
+                            <div style="color:#666;font-style:italic;">Esperando que la serpiente despierte...</div>
+                        </div>
+                    </div>
+
+                    <!-- Historial de susurros -->
+                    <div style="background:#1a0808;padding:15px;border-radius:8px;">
+                        <h4 style="color:#ff6666;margin:0 0 10px 0;font-size:12px;">🗣️ SUSURROS A LOS HUMANOS</h4>
+                        <div id="serpent-whispers-list" style="max-height:250px;overflow-y:auto;font-size:11px;">
+                            <div style="color:#666;font-style:italic;">Ningún susurro aún...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="divine-tab" class="tab-content">
                 <div style="background:linear-gradient(135deg,#1a1030,#0d0818);padding:15px;border-radius:10px;margin-bottom:15px;">
                     <h3 style="color:#ffd700;margin-bottom:10px;" id="divine-title">🔮 Sistema de Voz Divina</h3>
@@ -973,6 +1053,91 @@ async function fetchLogs() {
     } catch(e) {}
 }
 
+// ==================== DATOS DE LA SERPIENTE ====================
+let serpentData = null;
+
+async function fetchSerpent() {
+    try {
+        const res = await fetch('/serpent');
+        serpentData = await res.json();
+        updateSerpentUI();
+    } catch(e) {
+        console.error('Error fetching serpent:', e);
+    }
+}
+
+function updateSerpentUI() {
+    if (!serpentData) return;
+
+    // Mood
+    const moodEl = document.getElementById('serpent-mood');
+    if (moodEl) {
+        const moodTexts = {
+            'observant': '👁️ Observando',
+            'intrigued': '✨ Intrigado',
+            'persuasive': '🎯 Persuadiendo',
+            'frustrated': '😤 Frustrado',
+            'triumphant': '👑 Triunfante',
+            'melancholic': '😔 Melancólico'
+        };
+        moodEl.textContent = moodTexts[serpentData.mood] || serpentData.mood;
+        moodEl.style.color = serpentData.mood === 'triumphant' ? '#44ff44' :
+                            serpentData.mood === 'frustrated' ? '#ff4444' : '#ffaa66';
+    }
+
+    // Pensamiento actual
+    const thoughtEl = document.getElementById('serpent-thought');
+    if (thoughtEl && serpentData.thought) {
+        thoughtEl.textContent = `"${serpentData.thought}"`;
+    }
+
+    // Objetivo
+    const targetEl = document.getElementById('serpent-target');
+    if (targetEl) {
+        targetEl.textContent = serpentData.currentTarget ?
+            `🎯 Objetivo actual: ${serpentData.currentTarget}` :
+            '👁️ Observando a todos...';
+    }
+
+    // Estadísticas
+    const conversionsEl = document.getElementById('serpent-conversions');
+    const attemptsEl = document.getElementById('serpent-attempts');
+    const messagesEl = document.getElementById('serpent-messages-count');
+
+    if (conversionsEl) conversionsEl.textContent = serpentData.successfulConversions || 0;
+    if (attemptsEl) attemptsEl.textContent = serpentData.failedAttempts || 0;
+    if (messagesEl) messagesEl.textContent = serpentData.recentMessages?.length || 0;
+
+    // Historial de pensamientos
+    const thoughtsList = document.getElementById('serpent-thoughts-list');
+    if (thoughtsList && serpentData.recentThoughts?.length > 0) {
+        thoughtsList.innerHTML = serpentData.recentThoughts.slice().reverse().map(t => `
+            <div style="background:#2a1515;padding:8px;margin-bottom:5px;border-radius:5px;border-left:2px solid #ff4444;">
+                <div style="color:#ffcccc;font-style:italic;">"${t.thought}"</div>
+                <div style="color:#666;font-size:9px;margin-top:3px;">
+                    Día ${t.day}, Hora ${t.hour} ${t.target ? `| Pensando en: ${t.target}` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Historial de susurros
+    const whispersList = document.getElementById('serpent-whispers-list');
+    if (whispersList && serpentData.recentMessages?.length > 0) {
+        whispersList.innerHTML = serpentData.recentMessages.slice().reverse().map(m => `
+            <div style="background:#2a1515;padding:10px;margin-bottom:8px;border-radius:5px;border-left:2px solid #ff6666;">
+                <div style="color:#ff8888;font-size:10px;margin-bottom:5px;">
+                    🐍 Susurrando a <strong>${m.to}</strong>
+                </div>
+                <div style="color:#ffdddd;font-style:italic;">"${m.message}"</div>
+                <div style="color:#666;font-size:9px;margin-top:5px;">
+                    Día ${m.day}, Hora ${m.hour}
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
 const sim = {
     canvas: null,
     ctx: null,
@@ -983,6 +1148,13 @@ const sim = {
     lastTime: 0,
     cameraX: EDEN.centerX - 400,
     selectedHuman: null,
+    // Camera control
+    freeCamera: false,
+    isDragging: false,
+    dragStartX: 0,
+    cameraStartX: 0,
+    cameraSpeed: 15,
+    keysPressed: {},
 
     init() {
         this.canvas = document.getElementById('canvas');
@@ -1009,21 +1181,88 @@ const sim = {
 
         // Click on canvas to select human
         this.canvas.onclick = (e) => {
+            if (this.isDragging) return; // Don't select if we were dragging
             const rect = this.canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left + this.cameraX;
             const closest = humans.filter(h => h.alive).reduce((best, h) => {
                 const dist = Math.abs(h.x - clickX);
                 return dist < best.dist ? { h, dist } : best;
             }, { h: null, dist: 200 });
-            this.selectedHuman = closest.h;
+            if (closest.h) {
+                this.selectedHuman = closest.h;
+                this.freeCamera = false; // Auto-follow when selecting a human
+            }
         };
+
+        // Mouse drag for camera
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            this.dragStartX = e.clientX;
+            this.cameraStartX = this.cameraX;
+            this.freeCamera = true;
+            this.canvas.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (this.isDragging) {
+                const dx = this.dragStartX - e.clientX;
+                this.cameraX = Math.max(0, Math.min(WORLD_WIDTH - this.canvas.width, this.cameraStartX + dx));
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+        });
+
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            this.keysPressed[e.key] = true;
+            // Space to toggle free camera
+            if (e.key === ' ' || e.key === 'Escape') {
+                this.freeCamera = !this.freeCamera;
+                e.preventDefault();
+            }
+            // F to follow selected human
+            if (e.key === 'f' || e.key === 'F') {
+                this.freeCamera = false;
+            }
+            // Number keys to select humans by index
+            if (e.key >= '1' && e.key <= '9') {
+                const idx = parseInt(e.key) - 1;
+                const aliveHumans = humans.filter(h => h.alive);
+                if (aliveHumans[idx]) {
+                    this.selectedHuman = aliveHumans[idx];
+                    this.freeCamera = false;
+                }
+            }
+            // Home to go to Eden
+            if (e.key === 'Home') {
+                this.cameraX = EDEN.centerX - this.canvas.width / 2;
+                this.freeCamera = true;
+            }
+            // End to go to world end
+            if (e.key === 'End') {
+                this.cameraX = WORLD_WIDTH - this.canvas.width;
+                this.freeCamera = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            this.keysPressed[e.key] = false;
+        });
+
+        // Set initial cursor
+        this.canvas.style.cursor = 'grab';
 
         fetchData().then(() => {
             updateUILanguage(); // Actualizar idioma al inicio
         });
+        fetchSerpent(); // Cargar datos de la serpiente al inicio
         requestAnimationFrame(t => this.loop(t));
         setInterval(() => this.updateUI(), 300);
         setInterval(() => fetchData(), 1500);
+        setInterval(() => fetchSerpent(), 2000); // Actualizar datos de la serpiente
         setInterval(() => updateUILanguage(), 2000); // Actualizar idioma periódicamente
     },
 
@@ -1042,8 +1281,22 @@ const sim = {
 
         if(!this.paused) {
             World.update(dt);
+        }
 
-            // Camera follows selected or first human
+        // Camera controls - always active even when paused
+        if (this.freeCamera) {
+            // Keyboard movement
+            const moveSpeed = this.cameraSpeed * (this.keysPressed['Shift'] ? 3 : 1);
+            if (this.keysPressed['ArrowLeft'] || this.keysPressed['a'] || this.keysPressed['A']) {
+                this.cameraX -= moveSpeed;
+            }
+            if (this.keysPressed['ArrowRight'] || this.keysPressed['d'] || this.keysPressed['D']) {
+                this.cameraX += moveSpeed;
+            }
+            // Clamp camera
+            this.cameraX = Math.max(0, Math.min(WORLD_WIDTH - this.canvas.width, this.cameraX));
+        } else {
+            // Auto-follow selected or first human
             const target = this.selectedHuman || humans.find(h => h.alive);
             if(target) {
                 this.cameraX += (target.x - this.canvas.width / 2 - this.cameraX) * 0.08;
@@ -1402,6 +1655,9 @@ const sim = {
         document.getElementById('generations').textContent = worldState.maxGeneration || 1;
         document.getElementById('pregnant').textContent = worldState.pregnant || 0;
 
+        // Camera UI
+        this.updateCameraUI();
+
         // Phase
         const phaseText = document.getElementById('phaseText');
         const phaseIcon = document.getElementById('phaseIcon');
@@ -1449,7 +1705,7 @@ const sim = {
             const stageColor = stageColors[h.developmentStage] || '#8b7355';
 
             return `
-            <div class="human-card ${h.pregnant ? 'pregnant' : ''} ${h.inEden ? 'eden' : ''}" style="border-left-color: ${stageColor}">
+            <div class="human-card ${h.pregnant ? 'pregnant' : ''} ${h.inEden ? 'eden' : ''}" style="border-left-color: ${stageColor}; cursor: pointer;" onclick="sim.selectHuman(${h.id})">
                 <div class="human-header">
                     <span class="human-name">
                         ${emotionEmoji} ${h.name}
@@ -1683,12 +1939,45 @@ const sim = {
         event.target.classList.add('active');
     },
 
+    toggleCamera() {
+        this.freeCamera = !this.freeCamera;
+        this.updateCameraUI();
+    },
+
+    selectHuman(id) {
+        const h = humans.find(h => h.id === id);
+        if (h) {
+            this.selectedHuman = h;
+            this.freeCamera = false;
+            this.updateCameraUI();
+        }
+    },
+
+    updateCameraUI() {
+        const btn = document.getElementById('cameraBtn');
+        const target = document.getElementById('cameraTarget');
+        if (this.freeCamera) {
+            btn.textContent = '🎥 Libre';
+            btn.style.background = '#8b4513';
+            target.textContent = 'Explorar mundo';
+            target.style.color = '#ff9800';
+        } else {
+            btn.textContent = '📷 Seguir';
+            btn.style.background = '';
+            const h = this.selectedHuman || humans.find(h => h.alive);
+            target.textContent = h ? h.name : '-';
+            target.style.color = '#ffd700';
+        }
+    },
+
     async reset() {
         if (confirm('¿Reiniciar la simulación? Se perderá todo el progreso.')) {
             await fetch('/reset', { method: 'POST' });
             await fetchData();
             this.cameraX = EDEN.centerX - 400;
             this.selectedHuman = null;
+            this.freeCamera = false;
+            this.updateCameraUI();
         }
     },
 

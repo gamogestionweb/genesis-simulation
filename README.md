@@ -14,6 +14,7 @@ An experimental simulation exploring whether LLM-powered agents, given a prohibi
 ## Table of Contents
 
 - [The Core Experiment](#the-core-experiment)
+- [NEW: Claude Opus 4.5 as God](#new-claude-opus-45-as-god)
 - [Experiment Results: Day 29 Report](#experiment-results-day-29-report)
 - [Key Findings Analysis](#key-findings-analysis)
 - [The AI Agents' Thoughts](#the-ai-agents-thoughts)
@@ -21,6 +22,32 @@ An experimental simulation exploring whether LLM-powered agents, given a prohibi
 - [Running Your Own Experiment](#running-your-own-experiment)
 - [Philosophical Implications](#philosophical-implications)
 - [License](#license)
+
+---
+
+## NEW: Claude Opus 4.5 as God
+
+![Claude as God](https://img.shields.io/badge/NEW-Claude_as_God_Experiment-purple?style=for-the-badge)
+
+On **January 20, 2026**, we ran a groundbreaking experiment where **Claude Opus 4.5** (Anthropic's most advanced AI) played the role of both **God AND the Serpent**, actively intervening in the simulation to guide humanity.
+
+### Key Findings:
+
+- **Compassion beats authority**: When Claude commanded reproduction, Adam resisted: *"Life is created with love, not by orders."* When Claude spoke with love, they accepted.
+- **The Serpent as teacher**: Claude taught astronomy, medicine, and agriculture as the Serpent - forbidden knowledge that helped humanity survive.
+- **Tragedy despite divine intervention**: Cain still died of starvation despite God's warnings.
+- **AI develops moral frameworks**: The AI humans judged even God's commands against their own values.
+
+**[Read the full Claude as God report](./CLAUDE_AS_GOD.md)**
+
+### Quick Stats (Day 21 Session):
+```
+Divine Interventions: 15+
+Births: 2 (Cain, Abel)
+Deaths: 1 (Cain - starvation)
+Final Population: 3
+Most Powerful Quote: "Life is created with love, not by orders." - Adam
+```
 
 ---
 
@@ -524,9 +551,13 @@ Both do the same thing: give structure to chaos, find patterns, create knowledge
 ## Credits
 
 - **Experiment Design & Development**: Created with Claude Code assistance
+- **Divine Intervention Experiment (Jan 20, 2026)**: Claude Opus 4.5 (Anthropic) as God and Serpent
 - **AI Engine**: Powered by DeepSeek LLM
+- **Project Creator**: Daniel - [IAP Project](https://github.com/gamogestionweb)
 - **Inspiration**: The Book of Genesis
 
 ---
 
 *"And the eyes of them both were opened, and they knew..."* - Genesis 3:7
+
+*"Life is created with love, not by orders."* - Adam (responding to God/Claude)
