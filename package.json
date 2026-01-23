@@ -1,4 +1,11 @@
 {
+  "name": "genesis-simulation",
+  "version": "1.0.0",
+  "description": "AI Free Will Experiment - Genesis Simulation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^5.2.1"
   }
