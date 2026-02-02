@@ -189,11 +189,11 @@ function T(key) {
 
 // ==================== CONFIGURACIÓN ESCALABLE ====================
 const CONFIG = {
-    TICK_INTERVAL: 1500,          // 1.5 segundos entre ticks - MÁS RÁPIDO
+    TICK_INTERVAL: 800,           // 0.8 segundos entre ticks - MUCHO MÁS RÁPIDO
     THOUGHTS_PER_TICK: 20,        // Más humanos piensan por tick
     MAX_CONCURRENT_API: 15,       // Más llamadas API concurrentes
-    REPRODUCTION_COOLDOWN: 15,    // Días entre nacimientos
-    PREGNANCY_DURATION: 12,       // Días de embarazo
+    REPRODUCTION_COOLDOWN: 10,    // Días entre nacimientos - MÁS RÁPIDO
+    PREGNANCY_DURATION: 8,        // Días de embarazo - MÁS RÁPIDO
     SERPENT_APPEAR_DAY: 1,        // ¡SERPIENTE DESDE EL DÍA 1!
     MAX_POPULATION: 5000,         // Límite de población
     LOG_EVERYTHING: true,         // Loggear todo para reportes
@@ -3212,8 +3212,8 @@ let currentSimulationSpeed = 1;
 async function simulate() {
     if (!DEEPSEEK_KEY) return;
 
-    // Avanzar tiempo - speed multiplies hours passed
-    const hoursToAdvance = 2 * currentSimulationSpeed;
+    // Avanzar tiempo - speed multiplies hours passed - MÁS RÁPIDO
+    const hoursToAdvance = 4 * currentSimulationSpeed; // 4 horas base, no 2
     world.hour += hoursToAdvance;
     if (world.hour >= 24) {
         world.hour = 0;
@@ -3639,6 +3639,12 @@ function loadSession(req) {
 
 app.get('/humans', (req, res) => {
     if (!loadSession(req)) return res.json([]);
+
+    // GENERAR NUEVO PENSAMIENTO EN CADA REQUEST para que siempre haya algo nuevo
+    for (const h of [...humans.values()].filter(h => h.alive)) {
+        generateInstantThought(h, world);
+    }
+
     res.json([...humans.values()].map(h => h.json()));
 });
 
