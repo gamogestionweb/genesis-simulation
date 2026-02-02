@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node server.js:*)",
+      "Bash(curl:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(start /B node server.js)",
+      "Bash(python3:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd Claude Opus 4.5 as God/Serpent experiment \\(Day 21\\)\n\nNew experiment where Claude Opus 4.5 played both God and the Serpent\nto actively guide the AI humans toward survival and multiplication.\n\nKey findings:\n- Compassion beats authority \\(\"Life is created with love, not by orders\" - Adam\\)\n- The Serpent taught astronomy, medicine, agriculture \\(forbidden knowledge saves lives\\)\n- Cain died of starvation despite divine warnings\n- AI humans developed their own moral frameworks\n\nNew files:\n- CLAUDE_AS_GOD.md: Full documentation of the divine intervention experiment\n- genesis-report-day21.json: Complete simulation data \\(533 thoughts, 280 conversations\\)\n\nUpdated:\n- README.md: Added section about Claude as God experiment\n- genesis.html: UI improvements\n- server.js: Divine voice system enhancements\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(npm install:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:genesis-simulation-production.up.railway.app)",
+      "Bash(node -c:*)"
+    ]
+  }
+}

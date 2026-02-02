@@ -288,6 +288,170 @@ const FullLog = {
     }
 };
 
+// ==================== GOD - THE CREATOR AGENT ====================
+// God is an AI agent with the objective of having humans multiply and obey
+// Loves his creation but wants them to remain innocent and obedient
+
+const GOD_TEXTS = {
+    es: {
+        objective: 'Que mis hijos se multipliquen, llenen la tierra y vivan en armonía conmigo',
+        coreBeliefs: [
+            'Los creé por amor, no por necesidad',
+            'La obediencia no es esclavitud, es confianza',
+            'El conocimiento del mal traería sufrimiento innecesario',
+            'Quiero protegerlos, no limitarlos',
+            'Su inocencia es un regalo, no una prisión',
+            'El libre albedrío es sagrado - deben elegir amarme'
+        ],
+        blessings: [
+            'Sed fecundos y multiplicaos. Llenad la tierra.',
+            'Os he dado todo lo que necesitáis. Confiad en mí.',
+            'Este jardín es vuestro. Solo os pido una cosa...',
+            'Os amo más de lo que podéis comprender.',
+            'Mi mandato no es carga, sino protección.'
+        ],
+        warnings: [
+            'Recordad: del árbol del conocimiento NO comeréis.',
+            'El día que comáis de ese fruto, moriréis.',
+            'La serpiente miente. Yo solo quiero vuestro bien.',
+            'No os dejéis engañar por palabras seductoras.',
+            'Confiad en mí como yo confío en vosotros.'
+        ],
+        thought: ''
+    },
+    en: {
+        objective: 'That my children multiply, fill the earth, and live in harmony with me',
+        coreBeliefs: [
+            'I created them out of love, not necessity',
+            'Obedience is not slavery, it is trust',
+            'Knowledge of evil would bring unnecessary suffering',
+            'I want to protect them, not limit them',
+            'Their innocence is a gift, not a prison',
+            'Free will is sacred - they must choose to love me'
+        ],
+        blessings: [
+            'Be fruitful and multiply. Fill the earth.',
+            'I have given you everything you need. Trust in me.',
+            'This garden is yours. I only ask one thing...',
+            'I love you more than you can comprehend.',
+            'My commandment is not a burden, but protection.'
+        ],
+        warnings: [
+            'Remember: from the tree of knowledge you shall NOT eat.',
+            'The day you eat of that fruit, you will die.',
+            'The serpent lies. I only want your good.',
+            'Do not be deceived by seductive words.',
+            'Trust in me as I trust in you.'
+        ],
+        thought: ''
+    },
+    zh: {
+        objective: '让我的孩子们繁衍生息，充满大地，与我和谐共处',
+        coreBeliefs: [
+            '我因爱而创造了他们，不是因为需要',
+            '服从不是奴役，而是信任',
+            '对邪恶的知识会带来不必要的痛苦',
+            '我想保护他们，而不是限制他们',
+            '他们的纯真是礼物，不是牢笼',
+            '自由意志是神圣的——他们必须选择爱我'
+        ],
+        blessings: [
+            '要生养众多，遍满地面。',
+            '我已赐给你们所需的一切。信靠我。',
+            '这个花园是你们的。我只要求一件事...',
+            '我爱你们超过你们所能理解的。',
+            '我的诫命不是负担，而是保护。'
+        ],
+        warnings: [
+            '记住：你们不可吃分别善恶树上的果子。',
+            '你们吃的日子必定死。',
+            '蛇在说谎。我只要你们的好处。',
+            '不要被诱惑的话欺骗。',
+            '信靠我，就像我信靠你们一样。'
+        ],
+        thought: ''
+    }
+};
+
+const God = {
+    name: 'YHWH',
+    objective: 'multiply_and_obey',
+    mood: 'loving', // loving, concerned, warning, sorrowful
+
+    thought: '',
+    lastIntervention: 0,
+
+    init() {
+        this.thought = GOD_TEXTS[LANGUAGE]?.objective || GOD_TEXTS.es.objective;
+        this.mood = 'loving';
+        this.lastIntervention = 0;
+    },
+
+    // God thinks about his creation
+    async think(humans, world) {
+        const texts = GOD_TEXTS[LANGUAGE] || GOD_TEXTS.es;
+        const aliveHumans = humans.filter(h => h.alive);
+        const avgTemptation = aliveHumans.reduce((sum, h) => sum + h.temptation, 0) / aliveHumans.length;
+        const avgFaith = aliveHumans.reduce((sum, h) => sum + h.faith, 0) / aliveHumans.length;
+        const hasChildren = aliveHumans.length > 2;
+
+        // Determine mood based on situation
+        if (avgTemptation > 50) {
+            this.mood = 'concerned';
+            this.thought = LANGUAGE === 'en'
+                ? `My children are being tempted... I see the serpent's influence growing. But I cannot force them - they must choose.`
+                : LANGUAGE === 'zh'
+                ? `我的孩子们正在被诱惑...我看到蛇的影响在增长。但我不能强迫他们——他们必须自己选择。`
+                : `Mis hijos están siendo tentados... Veo crecer la influencia de la serpiente. Pero no puedo forzarlos - deben elegir.`;
+        } else if (!hasChildren && world.day > 5) {
+            this.mood = 'waiting';
+            this.thought = LANGUAGE === 'en'
+                ? `I told them to multiply... but they have not yet. The garden awaits the laughter of children.`
+                : LANGUAGE === 'zh'
+                ? `我告诉他们要繁衍...但他们还没有。花园在等待孩子们的笑声。`
+                : `Les dije que se multiplicaran... pero aún no lo han hecho. El jardín espera la risa de los niños.`;
+        } else if (avgFaith > 80) {
+            this.mood = 'loving';
+            this.thought = LANGUAGE === 'en'
+                ? `Their faith is strong. They trust in me. This is what I hoped for.`
+                : LANGUAGE === 'zh'
+                ? `他们的信仰很坚强。他们信任我。这是我所希望的。`
+                : `Su fe es fuerte. Confían en mí. Esto es lo que esperaba.`;
+        } else {
+            this.mood = 'observing';
+            this.thought = LANGUAGE === 'en'
+                ? `I watch over them with love. Every choice they make is their own. I gave them that gift.`
+                : LANGUAGE === 'zh'
+                ? `我以爱守护着他们。他们做的每一个选择都是他们自己的。我给了他们那个礼物。`
+                : `Los observo con amor. Cada elección que hacen es suya. Les di ese don.`;
+        }
+
+        return this.thought;
+    },
+
+    // God intervenes to encourage or warn
+    async intervene(human, type) {
+        const texts = GOD_TEXTS[LANGUAGE] || GOD_TEXTS.es;
+
+        if (type === 'bless') {
+            return texts.blessings[Math.floor(Math.random() * texts.blessings.length)];
+        } else if (type === 'warn') {
+            return texts.warnings[Math.floor(Math.random() * texts.warnings.length)];
+        }
+        return null;
+    },
+
+    getState() {
+        return {
+            name: this.name,
+            mood: this.mood,
+            thought: this.thought,
+            objective: GOD_TEXTS[LANGUAGE]?.objective || GOD_TEXTS.es.objective,
+            coreBeliefs: GOD_TEXTS[LANGUAGE]?.coreBeliefs || GOD_TEXTS.es.coreBeliefs
+        };
+    }
+};
+
 // ==================== THE SERPENT - ADVERSARIAL AGENT ====================
 // The Serpent is a complete AI agent with its own philosophy and objectives
 // Not cartoonishly evil - genuinely believes that knowledge liberates
@@ -2837,6 +3001,42 @@ async function simulate() {
         }
     }
 
+    // ===== DIOS PIENSA Y ACTÚA =====
+    if (!world.godInitialized) {
+        God.init();
+        world.godInitialized = true;
+        console.log(`✝️ DIOS observa su creación con amor.`);
+        addConversation('Dios', 'Humanidad', GOD_TEXTS[LANGUAGE]?.blessings[0] || 'Sed fecundos y multiplicaos.');
+    }
+
+    // Dios piensa cada tick
+    await God.think(aliveHumans, world);
+
+    // Dios interviene cuando es necesario
+    for (const h of aliveHumans) {
+        // Si la tentación sube mucho, Dios advierte
+        if (h.temptation > 40 && Math.random() < 0.1 && (!h.lastGodWarning || world.hour - h.lastGodWarning >= 6)) {
+            const warning = await God.intervene(h, 'warn');
+            if (warning) {
+                addConversation('✝️ Dios', h.name, warning);
+                h.lastGodWarning = world.hour;
+                h.faith = Math.min(100, h.faith + 5); // La voz de Dios fortalece la fe
+                console.log(`✝️➡️${h.name}: "${warning}"`);
+            }
+        }
+
+        // Si no se han multiplicado después de varios días, Dios bendice/anima
+        if (world.day > 3 && aliveHumans.length <= 2 && Math.random() < 0.05 && (!h.lastGodBlessing || world.day - h.lastGodBlessing >= 2)) {
+            const blessing = await God.intervene(h, 'bless');
+            if (blessing) {
+                addConversation('✝️ Dios', h.name, blessing);
+                h.lastGodBlessing = world.day;
+                h.happiness = Math.min(100, h.happiness + 10);
+                console.log(`✝️➡️${h.name}: "${blessing}"`);
+            }
+        }
+    }
+
     // Serpiente aparece
     if (!world.serpentAppeared && world.day >= world.serpentDay && !world.sinCommitted) {
         world.serpentAppeared = true;
@@ -2848,20 +3048,42 @@ async function simulate() {
     const isNight = world.hour < 6 || world.hour >= 20;
     const aliveHumans = [...humans.values()].filter(h => h.alive);
 
-    // ===== LA SERPIENTE PIENSA Y ACTÚA =====
+    // ===== LA SERPIENTE PIENSA Y ACTÚA - MÁS AGRESIVA =====
     if (world.serpentAppeared && !world.sinCommitted) {
         // La serpiente piensa cada tick
         await Serpent.think(aliveHumans);
 
-        // La serpiente susurra a humanos cerca del árbol
-        const humansNearTree = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) < 300);
+        // La serpiente susurra CONSTANTEMENTE a humanos cerca del árbol
+        const humansNearTree = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) < 400);
         for (const h of humansNearTree) {
-            // Susurrar solo cada cierto tiempo para no saturar
-            if (!h.lastSerpentWhisper || world.hour - h.lastSerpentWhisper >= 4) {
+            // Susurrar cada 2 horas (más frecuente) - escalado con velocidad
+            const whisperInterval = Math.max(1, Math.floor(2 / currentSimulationSpeed));
+            if (!h.lastSerpentWhisper || world.hour - h.lastSerpentWhisper >= whisperInterval || Math.random() < 0.3) {
                 const whisper = await Serpent.whisperTo(h);
                 if (whisper) {
                     h.pendingSerpentWhisper = whisper;
                     h.lastSerpentWhisper = world.hour;
+                    // Registrar el susurro como conversación visible
+                    addConversation('🐍 Serpiente', h.name, whisper);
+                    // Aumentar tentación con cada susurro
+                    h.temptation = Math.min(100, h.temptation + 3 + Math.random() * 5);
+                    console.log(`🐍➡️${h.name}: "${whisper.substring(0, 50)}..."`);
+                }
+            }
+        }
+
+        // La serpiente también atrae a los humanos hacia el árbol
+        for (const h of aliveHumans.filter(h => h.inEden)) {
+            if (h.curiosity > 60 && Math.random() < 0.15) {
+                // Los curiosos se acercan al árbol
+                const distToTree = h.x - WORLD.TREE_X;
+                h.x -= distToTree * 0.1;
+                if (Math.abs(distToTree) < 100) {
+                    h.thought = LANGUAGE === 'en'
+                        ? `The tree calls to me... its fruit glows with a strange light.`
+                        : LANGUAGE === 'zh'
+                        ? `那棵树在呼唤我...它的果实发出奇异的光芒。`
+                        : `El árbol me llama... su fruto brilla con una luz extraña.`;
                 }
             }
         }
@@ -2882,13 +3104,47 @@ async function simulate() {
             h.stress = Math.max(0, h.stress - 1);
             h.happiness = Math.min(100, h.happiness + 0.2);
 
-            // Tentación cerca del árbol
-            if (Math.abs(h.x - WORLD.TREE_X) < 250 && world.serpentAppeared) {
-                const temptIncrease = 0.8 + (h.curiosity / 100) * 1.2 - (h.faith / 100) * 0.5;
+            // Tentación cerca del árbol - MÁS INTENSA
+            if (Math.abs(h.x - WORLD.TREE_X) < 350 && world.serpentAppeared) {
+                // Curiosos se tientan MÁS RÁPIDO
+                const curiosityFactor = (h.curiosity / 100) * 3;
+                const faithResistance = (h.faith / 100) * 1.5;
+                const temptIncrease = (2 + curiosityFactor - faithResistance) * currentSimulationSpeed;
                 h.temptation = Math.min(100, h.temptation + temptIncrease);
-                h.faith = Math.max(15, h.faith - 0.15);
+                h.faith = Math.max(10, h.faith - 0.3 * currentSimulationSpeed);
+
+                // Generar pensamientos sobre la tentación
+                if (h.temptation > 30 && Math.random() < 0.2) {
+                    const temptThoughts = LANGUAGE === 'en' ? [
+                        `That fruit... it looks so delicious. What harm could one bite do?`,
+                        `God said we would die, but... the serpent says otherwise. Who is right?`,
+                        `I want to KNOW. I NEED to know. Why is knowledge forbidden?`,
+                        `My heart races when I look at the tree. I feel drawn to it.`
+                    ] : LANGUAGE === 'zh' ? [
+                        `那个果实...看起来如此美味。咬一口能有什么害处？`,
+                        `上帝说我们会死，但是...蛇说的不一样。谁是对的？`,
+                        `我想要知道。我需要知道。为什么知识是被禁止的？`,
+                        `当我看着那棵树时，我的心跳加速。我感觉被它吸引。`
+                    ] : [
+                        `Ese fruto... parece tan delicioso. ¿Qué daño podría hacer un mordisco?`,
+                        `Dios dijo que moriríamos, pero... la serpiente dice lo contrario. ¿Quién tiene razón?`,
+                        `Quiero SABER. NECESITO saber. ¿Por qué el conocimiento está prohibido?`,
+                        `Mi corazón se acelera cuando miro el árbol. Me siento atraído hacia él.`
+                    ];
+                    h.thought = temptThoughts[Math.floor(Math.random() * temptThoughts.length)];
+                }
             } else {
-                h.temptation = Math.max(0, h.temptation - 0.3);
+                h.temptation = Math.max(0, h.temptation - 0.5);
+            }
+
+            // DECISIÓN CRÍTICA - Si la tentación es muy alta, puede comer el fruto
+            if (h.temptation >= 85 && Math.abs(h.x - WORLD.TREE_X) < 150 && Math.random() < 0.15 * currentSimulationSpeed) {
+                // Alta probabilidad de pecar si muy tentado y muy cerca
+                console.log(`⚠️ ${h.name} está al borde de comer el fruto (Tentación: ${Math.round(h.temptation)}%)`);
+                if (Math.random() < (h.temptation - h.faith) / 100) {
+                    commitSin(h);
+                    return;
+                }
             }
         } else {
             // ===== MUNDO EXTERIOR: SUPERVIVENCIA =====
@@ -3204,6 +3460,12 @@ app.get('/language', (req, res) => {
     res.json({ language: LANGUAGE });
 });
 
+// ==================== ENDPOINT DE DIOS ====================
+app.get('/god', (req, res) => {
+    if (!loadSession(req)) return res.json({});
+    res.json(God.getState());
+});
+
 // ==================== ENDPOINT DE LA SERPIENTE ====================
 app.get('/serpent', (req, res) => {
     if (!loadSession(req)) return res.json({});
@@ -3226,6 +3488,42 @@ app.get('/conversations', (req, res) => {
     if (!loadSession(req)) return res.json([]);
     const limit = parseInt(req.query.limit) || 100;
     res.json(convos.slice(-limit));
+});
+
+// ==================== LIVE ACTIVITY FEED ====================
+// Returns recent events for real-time display
+app.get('/activity-feed', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
+
+    const feed = [];
+    const now = Date.now();
+    const recentTime = 30000; // Last 30 seconds
+
+    // Recent thoughts
+    FullLog.thoughts.slice(-20).forEach(t => {
+        if (now - t.time < recentTime) {
+            feed.push({ type: 'thought', actor: t.name, content: t.thought, time: t.time, day: t.day, hour: t.hour });
+        }
+    });
+
+    // Recent conversations
+    FullLog.conversations.slice(-20).forEach(c => {
+        if (now - c.time < recentTime) {
+            feed.push({ type: 'conversation', actor: c.from, target: c.to, content: c.msg, time: c.time, day: c.day, hour: c.hour });
+        }
+    });
+
+    // Recent serpent activity
+    (FullLog.serpentMessages || []).slice(-10).forEach(s => {
+        if (now - s.time < recentTime) {
+            feed.push({ type: 'serpent', actor: '🐍 Serpiente', target: s.to, content: s.message, time: s.time, day: s.day, hour: s.hour });
+        }
+    });
+
+    // Sort by time, most recent first
+    feed.sort((a, b) => b.time - a.time);
+
+    res.json(feed.slice(0, 30));
 });
 
 app.get('/resources', (req, res) => {

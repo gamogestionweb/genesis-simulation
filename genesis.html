@@ -430,6 +430,7 @@
 
             <div class="tabs">
                 <div class="tab active" data-tab="population" id="tab-population">👥 Población</div>
+                <div class="tab" data-tab="god" id="tab-god">✝️ DIOS</div>
                 <div class="tab" data-tab="serpent" id="tab-serpent">🐍 NACHASH</div>
                 <div class="tab" data-tab="divine" id="tab-divine">🔮 VOZ DIVINA</div>
                 <div class="tab" data-tab="conversations" id="tab-conversations">💬 Conversaciones</div>
@@ -439,6 +440,62 @@
             </div>
 
             <div id="population-tab" class="tab-content active"></div>
+
+            <!-- TAB DE DIOS - YHWH -->
+            <div id="god-tab" class="tab-content">
+                <div style="background:linear-gradient(135deg,#0a1a2a,#152535);padding:20px;border-radius:10px;border:1px solid #204060;">
+                    <!-- Header de Dios -->
+                    <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;">
+                        <div style="font-size:3em;">✝️</div>
+                        <div>
+                            <h2 style="color:#66aaff;margin:0;">YHWH</h2>
+                            <p style="color:#88aacc;margin:0;font-size:12px;font-style:italic;">El Creador</p>
+                        </div>
+                        <div id="god-mood" style="margin-left:auto;padding:8px 15px;background:#1a3a5a;border-radius:20px;color:#66aaff;font-size:11px;">
+                            💖 Amoroso
+                        </div>
+                    </div>
+
+                    <!-- Objetivo de Dios -->
+                    <div style="background:#1a2a3a;padding:15px;border-radius:8px;margin-bottom:15px;border-left:3px solid #4488ff;">
+                        <h4 style="color:#88ccff;margin:0 0 10px 0;font-size:12px;">🎯 OBJETIVO DIVINO</h4>
+                        <div style="color:#aaccff;font-size:13px;line-height:1.5;">
+                            Que mis hijos se multipliquen, llenen la tierra y vivan en armonía conmigo.
+                        </div>
+                    </div>
+
+                    <!-- Creencias de Dios -->
+                    <div style="background:#102030;padding:15px;border-radius:8px;margin-bottom:15px;border-left:3px solid #4444ff;">
+                        <h4 style="color:#8888ff;margin:0 0 10px 0;font-size:12px;">💭 NATURALEZA DIVINA</h4>
+                        <div style="color:#99aacc;font-size:11px;line-height:1.6;">
+                            <div>• Los creé por amor, no por necesidad</div>
+                            <div>• La obediencia no es esclavitud, es confianza</div>
+                            <div>• El conocimiento del mal traería sufrimiento</div>
+                            <div>• Quiero protegerlos, no limitarlos</div>
+                            <div>• El libre albedrío es sagrado</div>
+                        </div>
+                    </div>
+
+                    <!-- Pensamiento actual de Dios -->
+                    <div style="background:#0a1520;padding:15px;border-radius:8px;margin-bottom:15px;">
+                        <h4 style="color:#66aaff;margin:0 0 10px 0;font-size:12px;">💭 PENSAMIENTO ACTUAL</h4>
+                        <div id="god-thought" style="color:#ccddff;font-size:13px;font-style:italic;line-height:1.5;">
+                            "Observo a mis hijos con amor infinito..."
+                        </div>
+                    </div>
+
+                    <!-- El conflicto con la serpiente -->
+                    <div style="background:linear-gradient(90deg,#102030,#201020);padding:15px;border-radius:8px;border:1px solid #444;">
+                        <h4 style="color:#ffaa66;margin:0 0 10px 0;font-size:12px;">⚔️ EL CONFLICTO ETERNO</h4>
+                        <div style="color:#ccaa88;font-size:11px;line-height:1.6;">
+                            La serpiente quiere <strong style="color:#ff6666;">liberar</strong> a los humanos del "yugo" de la ignorancia.<br>
+                            Yo quiero <strong style="color:#66aaff;">protegerlos</strong> del sufrimiento que trae el conocimiento del mal.<br>
+                            <br>
+                            <em style="color:#888;">Ambos creemos actuar por su bien. Solo ellos pueden elegir.</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- TAB DE LA SERPIENTE - NACHASH -->
             <div id="serpent-tab" class="tab-content">
@@ -1186,6 +1243,41 @@ async function fetchLogs() {
     } catch(e) {}
 }
 
+// ==================== DATOS DE DIOS ====================
+let godData = null;
+
+async function fetchGod() {
+    try {
+        const res = await fetch('/god');
+        godData = await res.json();
+        updateGodUI();
+    } catch(e) {
+        console.error('Error fetching god:', e);
+    }
+}
+
+function updateGodUI() {
+    if (!godData) return;
+
+    const godThought = document.getElementById('god-thought');
+    if (godThought) {
+        godThought.textContent = `"${godData.thought}"`;
+    }
+
+    const godMood = document.getElementById('god-mood');
+    if (godMood) {
+        const moodTexts = {
+            'loving': '💖 Amoroso',
+            'concerned': '😟 Preocupado',
+            'warning': '⚠️ Advirtiendo',
+            'waiting': '⏳ Esperando',
+            'observing': '👁️ Observando',
+            'sorrowful': '😢 Triste'
+        };
+        godMood.textContent = moodTexts[godData.mood] || godData.mood;
+    }
+}
+
 // ==================== DATOS DE LA SERPIENTE ====================
 let serpentData = null;
 
@@ -1389,14 +1481,16 @@ const sim = {
         this.canvas.style.cursor = 'grab';
 
         fetchData().then(() => {
-            updateUILanguage(); // Actualizar idioma al inicio
+            updateUILanguage();
         });
-        fetchSerpent(); // Cargar datos de la serpiente al inicio
+        fetchSerpent();
+        fetchGod();
         requestAnimationFrame(t => this.loop(t));
-        setInterval(() => this.updateUI(), 300);
-        setInterval(() => fetchData(), 1500);
-        setInterval(() => fetchSerpent(), 2000); // Actualizar datos de la serpiente
-        setInterval(() => updateUILanguage(), 2000); // Actualizar idioma periódicamente
+        setInterval(() => this.updateUI(), 200); // MÁS RÁPIDO - 5 veces por segundo
+        setInterval(() => fetchData(), 600); // MÁS RÁPIDO - casi en tiempo real
+        setInterval(() => fetchSerpent(), 800);
+        setInterval(() => fetchGod(), 800);
+        setInterval(() => updateUILanguage(), 2000);
     },
 
     resize() {
