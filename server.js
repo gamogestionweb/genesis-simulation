@@ -2934,6 +2934,230 @@ function addConversation(from, to, msg) {
     if (convos.length > 500) convos.shift();
 }
 
+// ==================== GENERADOR DE PENSAMIENTOS INSTANTÁNEOS ====================
+// Genera pensamientos CADA TICK sin esperar a la API - hace la simulación VIVA
+function generateInstantThought(h, world) {
+    const partner = h.partner ? [...humans.values()].find(o => o.name === h.partner && o.alive) : null;
+    const nearTree = Math.abs(h.x - WORLD.TREE_X) < 300 && h.inEden;
+    const serpentNear = world.serpentAppeared && nearTree;
+
+    // Pools de pensamientos según contexto
+    const thoughts = {
+        es: {
+            general: [
+                `¿Qué es ese sonido? Los pájaros cantan tan hermoso hoy...`,
+                `El aire huele a flores y miel. Este lugar es perfecto.`,
+                `Me pregunto qué habrá más allá de esas colinas...`,
+                `Siento una paz profunda, pero también... algo más. ¿Inquietud?`,
+                `¿Por qué existo? ¿Cuál es mi propósito aquí?`,
+                `Cada día descubro algo nuevo en este jardín.`,
+                `Las nubes tienen formas tan curiosas hoy.`,
+                `Siento gratitud por todo esto, pero también curiosidad.`,
+                `¿Dios me observa ahora mismo? ¿Qué piensa de mí?`,
+                `A veces siento que hay algo que no entiendo...`
+            ],
+            withPartner: [
+                `${partner?.name} sonríe... me hace sentir completo/a.`,
+                `¿Qué estará pensando ${partner?.name}? Me gustaría saberlo.`,
+                `Juntos somos más fuertes. ${partner?.name} es mi todo.`,
+                `Miro a ${partner?.name} y siento amor. ¿Esto es lo que Dios quería?`,
+                `${partner?.name} me hace preguntas que no sé responder...`,
+                `Deberíamos tener hijos. Es lo que Dios pidió.`,
+                `A veces ${partner?.name} mira el árbol prohibido... me preocupa.`
+            ],
+            nearTree: [
+                `El árbol... está tan cerca. Su fruto brilla de forma extraña.`,
+                `¿Por qué Dios puso algo tan hermoso si no podemos tocarlo?`,
+                `Siento mi corazón latir más fuerte cerca de este árbol.`,
+                `Un mordisco... solo uno. ¿Qué podría pasar realmente?`,
+                `El fruto parece llamarme. Debo... debo resistir.`,
+                `¿Y si Dios se equivoca? No, no debo pensar así.`,
+                `La curiosidad me consume. ¿Qué secretos guarda ese fruto?`
+            ],
+            serpentNear: [
+                `La serpiente me mira... sus ojos brillan con inteligencia.`,
+                `Sus palabras tienen sentido, pero... ¿puedo confiar en ella?`,
+                `¿Por qué la serpiente sabe tanto? ¿Quién le enseñó?`,
+                `Dice que no moriré... pero Dios dijo que sí. ¿Quién miente?`,
+                `"Seréis como dioses"... ¿Qué significa realmente?`,
+                `La serpiente no me obliga a nada. Solo... pregunta.`,
+                `Sus preguntas me perturban. No tengo respuestas.`,
+                `¿Y si la serpiente tiene razón sobre el conocimiento?`
+            ],
+            highTemptation: [
+                `Ya no puedo resistir más... el fruto me llama.`,
+                `Mi fe flaquea. ¿Por qué es tan difícil obedecer?`,
+                `Solo un mordisco. Dios me perdonará... ¿verdad?`,
+                `La curiosidad es más fuerte que el miedo.`,
+                `¿Qué es la muerte? Quizás vale la pena arriesgarse.`,
+                `Mi mano tiembla... estoy tan cerca del árbol...`,
+                `El conocimiento del bien y del mal... lo quiero. LO NECESITO.`
+            ],
+            highFaith: [
+                `Dios me ama. Confío en Él completamente.`,
+                `La serpiente miente. No caeré en su trampa.`,
+                `Este paraíso es suficiente. No necesito más.`,
+                `Mi fe es mi escudo contra la tentación.`,
+                `Dios sabe lo que es mejor para mí.`,
+                `La obediencia no es debilidad, es amor.`
+            ]
+        },
+        en: {
+            general: [
+                `What is that sound? The birds sing so beautifully today...`,
+                `The air smells of flowers and honey. This place is perfect.`,
+                `I wonder what lies beyond those hills...`,
+                `I feel deep peace, but also... something else. Restlessness?`,
+                `Why do I exist? What is my purpose here?`,
+                `Every day I discover something new in this garden.`,
+                `The clouds have such curious shapes today.`,
+                `I feel gratitude for all this, but also curiosity.`,
+                `Is God watching me right now? What does He think of me?`,
+                `Sometimes I feel there's something I don't understand...`
+            ],
+            withPartner: [
+                `${partner?.name} smiles... it makes me feel complete.`,
+                `What is ${partner?.name} thinking? I wish I knew.`,
+                `Together we are stronger. ${partner?.name} is my everything.`,
+                `I look at ${partner?.name} and feel love. Is this what God wanted?`,
+                `${partner?.name} asks me questions I cannot answer...`,
+                `We should have children. It's what God asked.`,
+                `Sometimes ${partner?.name} looks at the forbidden tree... it worries me.`
+            ],
+            nearTree: [
+                `The tree... it's so close. Its fruit glows strangely.`,
+                `Why did God put something so beautiful if we cannot touch it?`,
+                `I feel my heart beating faster near this tree.`,
+                `One bite... just one. What could really happen?`,
+                `The fruit seems to call me. I must... I must resist.`,
+                `What if God is wrong? No, I shouldn't think that way.`,
+                `Curiosity consumes me. What secrets does that fruit hold?`
+            ],
+            serpentNear: [
+                `The serpent watches me... its eyes shine with intelligence.`,
+                `Its words make sense, but... can I trust it?`,
+                `Why does the serpent know so much? Who taught it?`,
+                `It says I won't die... but God said I would. Who lies?`,
+                `"You will be like gods"... what does that really mean?`,
+                `The serpent doesn't force me. It just... asks.`,
+                `Its questions disturb me. I have no answers.`,
+                `What if the serpent is right about knowledge?`
+            ],
+            highTemptation: [
+                `I can't resist anymore... the fruit calls to me.`,
+                `My faith wavers. Why is it so hard to obey?`,
+                `Just one bite. God will forgive me... right?`,
+                `Curiosity is stronger than fear.`,
+                `What is death? Maybe it's worth the risk.`,
+                `My hand trembles... I'm so close to the tree...`,
+                `Knowledge of good and evil... I want it. I NEED it.`
+            ],
+            highFaith: [
+                `God loves me. I trust Him completely.`,
+                `The serpent lies. I won't fall for its trap.`,
+                `This paradise is enough. I don't need more.`,
+                `My faith is my shield against temptation.`,
+                `God knows what's best for me.`,
+                `Obedience is not weakness, it's love.`
+            ]
+        },
+        zh: {
+            general: [
+                `那是什么声音？今天鸟儿唱得真好听...`,
+                `空气中弥漫着花香和蜜糖的味道。这个地方太完美了。`,
+                `我想知道那些山丘后面有什么...`,
+                `我感到深深的平静，但也...还有别的。不安？`,
+                `我为什么存在？我在这里的目的是什么？`,
+                `每天我都在这个花园里发现新东西。`,
+                `今天的云彩形状真奇特。`,
+                `我对这一切心存感激，但也充满好奇。`,
+                `上帝现在在看着我吗？他怎么看我？`,
+                `有时我觉得有些东西我不明白...`
+            ],
+            withPartner: [
+                `${partner?.name}微笑着...让我感到完整。`,
+                `${partner?.name}在想什么？我想知道。`,
+                `在一起我们更强大。${partner?.name}是我的一切。`,
+                `我看着${partner?.name}感到爱。这是上帝想要的吗？`,
+                `${partner?.name}问我一些我无法回答的问题...`,
+                `我们应该有孩子。这是上帝的要求。`
+            ],
+            nearTree: [
+                `那棵树...离得好近。它的果实发着奇异的光。`,
+                `如果我们不能碰它，上帝为什么要放这么美的东西？`,
+                `靠近这棵树，我感到心跳加速。`,
+                `咬一口...就一口。到底会发生什么？`,
+                `果实似乎在呼唤我。我必须...我必须抵抗。`,
+                `如果上帝错了呢？不，我不应该这样想。`
+            ],
+            serpentNear: [
+                `蛇看着我...它的眼睛闪烁着智慧。`,
+                `它的话有道理，但是...我能相信它吗？`,
+                `为什么蛇知道这么多？谁教它的？`,
+                `它说我不会死...但上帝说会。谁在说谎？`,
+                `"你们会像神一样"...这到底是什么意思？`,
+                `蛇不强迫我。它只是...问问题。`
+            ],
+            highTemptation: [
+                `我再也无法抵抗了...果实在呼唤我。`,
+                `我的信仰动摇了。为什么顺从这么难？`,
+                `就咬一口。上帝会原谅我的...对吧？`,
+                `好奇心比恐惧更强大。`,
+                `死亡是什么？也许值得冒险。`
+            ],
+            highFaith: [
+                `上帝爱我。我完全信任他。`,
+                `蛇在说谎。我不会上当。`,
+                `这个天堂已经足够了。我不需要更多。`,
+                `我的信仰是抵御诱惑的盾牌。`
+            ]
+        }
+    };
+
+    const lang = LANGUAGE || 'es';
+    const t = thoughts[lang] || thoughts.es;
+
+    // Elegir pool según contexto
+    let pool = [...t.general];
+
+    if (partner) {
+        pool = pool.concat(t.withPartner);
+    }
+
+    if (nearTree) {
+        pool = pool.concat(t.nearTree);
+    }
+
+    if (serpentNear) {
+        pool = pool.concat(t.serpentNear);
+        pool = pool.concat(t.serpentNear); // Doble peso cuando la serpiente está cerca
+    }
+
+    if (h.temptation > 50) {
+        pool = pool.concat(t.highTemptation);
+    }
+
+    if (h.temptation > 70) {
+        pool = pool.concat(t.highTemptation); // Más peso
+        pool = pool.concat(t.highTemptation);
+    }
+
+    if (h.faith > 75) {
+        pool = pool.concat(t.highFaith);
+    }
+
+    // Elegir pensamiento aleatorio que no sea el mismo que el anterior
+    let newThought;
+    let attempts = 0;
+    do {
+        newThought = pool[Math.floor(Math.random() * pool.length)];
+        attempts++;
+    } while (newThought === h.thought && attempts < 5);
+
+    h.thought = newThought;
+    FullLog.addThought(h.id, h.name, h.thought, world.day, world.hour);
+}
+
 // ==================== PECADO ORIGINAL ====================
 function commitSin(sinner) {
     world.sinCommitted = true;
@@ -3093,6 +3317,10 @@ async function simulate() {
     for (const h of aliveHumans) {
         h.age += 0.06; // ~22 días = 1 año
         const biome = h.getBiome();
+
+        // ===== GENERAR PENSAMIENTO INSTANTÁNEO CADA TICK =====
+        // No esperamos a la API - generamos pensamientos ricos localmente
+        generateInstantThought(h, world);
 
         if (world.phase === 'eden' && h.inEden) {
             // ===== EDÉN: SIN NECESIDADES FÍSICAS =====
