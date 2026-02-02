@@ -940,6 +940,7 @@ app.post('/set-api-key', (req, res) => {
         },
         Serpent: null,
         simulationTimer: null,
+        simulationSpeed: 1, // 1 = normal, 3 = fast, 10 = very fast
         lastActivity: Date.now(),
         createdAt: Date.now()
     };
@@ -1017,6 +1018,7 @@ async function simulateSession(session) {
     // Load session state to globals
     DEEPSEEK_KEY = session.DEEPSEEK_KEY;
     LANGUAGE = session.LANGUAGE;
+    currentSimulationSpeed = session.simulationSpeed || 1; // Load speed from session
     world = session.world;
     humans = session.humans;
     convos = session.convos;
@@ -2791,11 +2793,15 @@ function commitSin(sinner) {
 }
 
 // ==================== SIMULACIÓN PRINCIPAL ====================
+// simulationSpeed is passed from session (1, 3, or 10)
+let currentSimulationSpeed = 1;
+
 async function simulate() {
     if (!DEEPSEEK_KEY) return;
 
-    // Avanzar tiempo
-    world.hour += 2;
+    // Avanzar tiempo - speed multiplies hours passed
+    const hoursToAdvance = 2 * currentSimulationSpeed;
+    world.hour += hoursToAdvance;
     if (world.hour >= 24) {
         world.hour = 0;
         world.day++;
@@ -3101,6 +3107,22 @@ function loadSession(req) {
 app.get('/humans', (req, res) => {
     if (!loadSession(req)) return res.json([]);
     res.json([...humans.values()].map(h => h.json()));
+});
+
+// ==================== SPEED CONTROL ====================
+app.post('/set-speed', (req, res) => {
+    if (!req.session) return res.json({ ok: false, error: 'No session' });
+
+    const { speed } = req.body;
+    const validSpeeds = [1, 3, 10];
+
+    if (!validSpeeds.includes(speed)) {
+        return res.json({ ok: false, error: 'Invalid speed. Use 1, 3, or 10' });
+    }
+
+    req.session.simulationSpeed = speed;
+    console.log(`⚡ Session ${req.session.id.substring(0,8)} speed set to ${speed}x`);
+    res.json({ ok: true, speed });
 });
 
 app.get('/world-state', (req, res) => {

@@ -2129,6 +2129,15 @@ const sim = {
         this.speed = s;
         document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
+
+        // Send speed to server to accelerate simulation
+        fetch('/set-speed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ speed: s })
+        }).then(r => r.json()).then(d => {
+            if (d.ok) console.log(`⚡ Simulation speed set to ${s}x`);
+        }).catch(e => console.error('Speed change failed:', e));
     },
 
     toggleCamera() {
