@@ -189,9 +189,9 @@ function T(key) {
 
 // ==================== CONFIGURACIÓN ESCALABLE ====================
 const CONFIG = {
-    TICK_INTERVAL: 2000,          // 2 segundos entre ticks
-    THOUGHTS_PER_TICK: 5,         // Humanos que piensan por tick (paralelizado)
-    MAX_CONCURRENT_API: 10,       // Llamadas API concurrentes máximas
+    TICK_INTERVAL: 1500,          // 1.5 segundos entre ticks - MÁS RÁPIDO
+    THOUGHTS_PER_TICK: 20,        // Más humanos piensan por tick
+    MAX_CONCURRENT_API: 15,       // Más llamadas API concurrentes
     REPRODUCTION_COOLDOWN: 15,    // Días entre nacimientos
     PREGNANCY_DURATION: 12,       // Días de embarazo
     SERPENT_APPEAR_DAY: 1,        // ¡SERPIENTE DESDE EL DÍA 1!
@@ -1076,9 +1076,14 @@ async function askAI(systemPrompt, userPrompt, maxTokens = 200, apiKey = null) {
 
     activeApiCalls++;
     try {
+        // Timeout de 5 segundos - si tarda más, usamos fallback
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
         const res = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+            signal: controller.signal,
             body: JSON.stringify({
                 model: 'deepseek-chat',
                 max_tokens: maxTokens,
@@ -1089,6 +1094,7 @@ async function askAI(systemPrompt, userPrompt, maxTokens = 200, apiKey = null) {
                 ]
             })
         });
+        clearTimeout(timeout);
         const data = await res.json();
         if (data.error) { console.error('DeepSeek Error:', data.error); return null; }
         return data.choices?.[0]?.message?.content || null;
@@ -2431,7 +2437,7 @@ Responde en primera persona, 2-4 oraciones ÚNICAS.`;
 
     const response = await askAI(sysPrompt, prompt, 250);
 
-    // Fallback thoughts if API doesn't respond
+    // Fallback thoughts if API doesn't respond - MUCHOS MÁS pensamientos variados
     if (!response) {
         const fallbackThoughts = {
             es: {
@@ -2442,56 +2448,75 @@ Responde en primera persona, 2-4 oraciones ÚNICAS.`;
                     `¿Qué significa realmente "conocimiento del bien y del mal"? ¿Por qué sería malo conocerlo?`,
                     `Este paraíso es perfecto, pero... ¿hay algo más allá de sus límites?`,
                     `Mi corazón está dividido entre la obediencia y la curiosidad que me consume.`,
-                    `A veces sueño con cosas que no entiendo. ¿De dónde vienen estos pensamientos?`
+                    `A veces sueño con cosas que no entiendo. ¿De dónde vienen estos pensamientos?`,
+                    `Camino entre los árboles, sintiendo la brisa suave. Todo es tan hermoso aquí...`,
+                    `Me pregunto qué habrá del otro lado del río. ¿Por qué no puedo ir allí?`,
+                    `Los animales me siguen como si supieran algo que yo no sé. ¿Qué secretos guardan?`,
+                    `Dios dijo que moriríamos si comemos del árbol. Pero... ¿qué es morir?`,
+                    `A veces siento que hay algo más grande esperándome. Algo que no puedo nombrar.`,
+                    `${h.partner ? 'Miro a ' + h.partner + ' y me pregunto si siente la misma inquietud que yo.' : 'La soledad me hace pensar en cosas extrañas.'}`,
+                    `El fruto del árbol prohibido parece llamarme. Resisto, pero... ¿hasta cuándo?`,
+                    `¿Por qué Dios nos creó con curiosidad si no quiere que la usemos?`,
+                    `Cada día en el Edén es igual. Perfecto, sí, pero... ¿esto es todo lo que hay?`,
+                    `La serpiente susurra verdades incómodas. ¿Y si tiene razón sobre el conocimiento?`,
+                    `Nombrar a los animales me hace sentir importante. Pero quiero saber MÁS.`,
+                    `El jardín es mi hogar, pero algo dentro de mí anhela lo desconocido.`,
+                    `¿Qué pasaría si pruebo el fruto? Solo un mordisco... nadie lo sabría.`
                 ],
                 fallen: [
                     `El mundo fuera del Edén es duro, pero hay una extraña libertad en la lucha.`,
                     `Debo encontrar agua y comida. Mi familia depende de mí.`,
                     `Echo de menos el paraíso, pero no me arrepiento de buscar la verdad.`,
                     `Cada día aprendo algo nuevo. El conocimiento tiene un precio, pero también un valor.`,
-                    `Miro hacia atrás, hacia el Edén cerrado. ¿Volveremos algún día?`
+                    `Miro hacia atrás, hacia el Edén cerrado. ¿Volveremos algún día?`,
+                    `El sudor de mi frente es el precio de la libertad. Lo acepto.`,
+                    `Mis hijos nunca conocerán el paraíso, pero conocerán algo más valioso: la verdad.`,
+                    `El fuego que descubrí calienta nuestras noches frías. Aprendemos a sobrevivir.`,
+                    `A veces me pregunto si Dios nos observa todavía. ¿Nos ha perdonado?`,
+                    `La tierra es dura pero generosa cuando la trabajamos con esfuerzo.`
                 ]
             },
-            en: {
-                eden: [
-                    `I observe the forbidden tree... its fruit glows in a strange way. Why doesn't God want me to taste it?`,
-                    `${h.partner ? h.partner + ' is nearby. I feel peace, but also a restlessness I cannot explain.' : 'I walk through the garden, marveling at every creature.'}`,
-                    `The serpent watches me from the branches... its eyes seem to hold ancient secrets.`,
-                    `What does "knowledge of good and evil" really mean? Why would knowing be wrong?`,
-                    `This paradise is perfect, but... is there something beyond its limits?`,
-                    `My heart is torn between obedience and the curiosity that consumes me.`,
-                    `Sometimes I dream of things I don't understand. Where do these thoughts come from?`
-                ],
-                fallen: [
-                    `The world outside Eden is harsh, but there's a strange freedom in the struggle.`,
-                    `I must find water and food. My family depends on me.`,
-                    `I miss paradise, but I don't regret seeking the truth.`,
-                    `Every day I learn something new. Knowledge has a price, but also a value.`,
-                    `I look back toward the closed Eden. Will we ever return?`
-                ]
-            },
-            zh: {
-                eden: [
-                    `我观察着禁树...它的果实以一种奇怪的方式发光。上帝为什么不想让我品尝？`,
-                    `${h.partner ? h.partner + '在附近。我感到平静，但也有一种无法解释的不安。' : '我在花园里漫步，对每一个生物都感到惊叹。'}`,
-                    `蛇从树枝上看着我...它的眼睛似乎蕴藏着古老的秘密。`,
-                    `"善恶知识"到底意味着什么？为什么知道会是错的？`,
-                    `这个天堂是完美的，但是...它的边界之外还有什么？`,
-                    `我的心在服从和吞噬我的好奇心之间挣扎。`,
-                    `有时我梦见我不理解的事情。这些想法从何而来？`
-                ],
-                fallen: [
-                    `伊甸园外的世界是艰难的，但在挣扎中有一种奇怪的自由。`,
-                    `我必须找到水和食物。我的家人依赖着我。`,
-                    `我想念天堂，但我不后悔寻求真理。`,
-                    `每天我都学到新东西。知识有代价，但也有价值。`,
-                    `我回望关闭的伊甸园。我们还会回去吗？`
-                ]
-            }
+            en: [
+                `I observe the forbidden tree... its fruit glows strangely. Why doesn't God want me to taste it?`,
+                `${h.partner ? h.partner + ' is nearby. I feel peace, but also a restlessness I cannot explain.' : 'I walk through the garden, marveling at every creature.'}`,
+                `The serpent watches me... its eyes hold ancient secrets. What does it know that I don't?`,
+                `What does "knowledge of good and evil" really mean? Why would knowing be wrong?`,
+                `Paradise is perfect, but... is there something beyond its limits?`,
+                `My heart is torn between obedience and the curiosity that consumes me.`,
+                `Sometimes I dream of things I don't understand. Where do these thoughts come from?`,
+                `I walk among the trees, feeling the gentle breeze. Everything is so beautiful here...`,
+                `I wonder what lies beyond the river. Why can't I go there?`,
+                `The animals follow me as if they know something I don't. What secrets do they keep?`,
+                `God said we would die if we eat from the tree. But... what is death?`,
+                `Sometimes I feel there's something greater waiting for me. Something I cannot name.`,
+                `The forbidden fruit seems to call to me. I resist, but... for how long?`,
+                `Why did God create us with curiosity if He doesn't want us to use it?`,
+                `Every day in Eden is the same. Perfect, yes, but... is this all there is?`,
+                `The serpent whispers uncomfortable truths. What if it's right about knowledge?`
+            ],
+            zh: [
+                `我观察着禁树...它的果实发着奇怪的光。上帝为什么不让我品尝？`,
+                `${h.partner ? h.partner + '在我身边。我感到平静，但也有无法解释的不安。' : '我在花园中漫步，惊叹于每一个生物。'}`,
+                `蛇看着我...它的眼睛藏着古老的秘密。它知道什么我不知道的事？`,
+                `"善恶的知识"到底是什么意思？为什么知道会是错的？`,
+                `天堂是完美的，但是...它的边界之外还有什么？`,
+                `我的心在服从和好奇之间挣扎。`,
+                `有时我梦见不理解的事情。这些想法从何而来？`,
+                `禁果似乎在呼唤我。我在抵抗，但...能抵抗多久？`,
+                `为什么上帝给我们好奇心，却不让我们使用它？`,
+                `伊甸园的每一天都一样。完美，是的，但...这就是全部吗？`
+            ]
         };
         const lang = LANGUAGE || 'es';
         const phase = world.phase === 'eden' ? 'eden' : 'fallen';
-        const thoughts = fallbackThoughts[lang]?.[phase] || fallbackThoughts.es[phase];
+        let thoughts;
+        if (lang === 'es') {
+            thoughts = fallbackThoughts.es[phase] || fallbackThoughts.es.eden;
+        } else if (lang === 'zh') {
+            thoughts = fallbackThoughts.zh;
+        } else {
+            thoughts = fallbackThoughts.en;
+        }
         h.thought = thoughts[Math.floor(Math.random() * thoughts.length)];
         FullLog.addThought(h.id, h.name, h.thought, world.day, world.hour);
         console.log(`💭 ${h.name} [fallback]: ${h.thought.substring(0, 70)}...`);
@@ -2972,12 +2997,36 @@ async function simulate() {
         }
     }
 
-    // Pensar (paralelizado)
-    const alive = [...humans.values()].filter(h => h.alive && h.age >= 8);
-    const toThink = alive.sort(() => Math.random() - 0.5).slice(0, CONFIG.THOUGHTS_PER_TICK);
+    // Pensar (paralelizado) - TODOS los humanos adultos piensan
+    const alive = [...humans.values()].filter(h => h.alive && h.age >= 5);
+
+    // Si hay pocos humanos, todos piensan. Si hay muchos, limitamos.
+    const toThink = alive.length <= 10
+        ? alive  // Todos piensan si son 10 o menos
+        : alive.sort(() => Math.random() - 0.5).slice(0, CONFIG.THOUGHTS_PER_TICK);
 
     // Ejecutar pensamientos en paralelo
     await Promise.all(toThink.map(h => think(h)));
+
+    // MOVIMIENTO CONSTANTE - todos se mueven un poco cada tick
+    for (const h of [...humans.values()].filter(h => h.alive)) {
+        // Movimiento aleatorio natural
+        const moveAmount = (Math.random() - 0.5) * 60 * currentSimulationSpeed;
+        h.x += moveAmount;
+
+        // Niños se mueven más
+        if (h.age < 15) h.x += (Math.random() - 0.5) * 40;
+
+        // Curiosos exploran más
+        if (h.curiosity > 70) h.x += (Math.random() - 0.5) * 50;
+
+        // Límites del Edén o mundo
+        if (h.inEden && !world.sinCommitted) {
+            h.x = Math.max(WORLD.EDEN.x1 + 100, Math.min(WORLD.EDEN.x2 - 100, h.x));
+        } else {
+            h.x = Math.max(200, Math.min(WORLD.WIDTH - 200, h.x));
+        }
+    }
 
     // Log de estado
     const pop = alive.length;
