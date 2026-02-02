@@ -11,6 +11,17 @@ An experimental simulation exploring whether LLM-powered agents, given a prohibi
 
 ---
 
+## **Live Demo**
+
+**[▶ Try Genesis Simulation NOW](https://genesis-simulation-production.up.railway.app/)**
+
+- Bring your own **DeepSeek API Key** (get one free at [platform.deepseek.com](https://platform.deepseek.com))
+- **Each user gets their own independent simulation** - your world, your Adam & Eve
+- Available in **English** and **Spanish**
+- No account needed - just enter your API key and start
+
+---
+
 ## Table of Contents
 
 - [The Core Experiment](#the-core-experiment)
