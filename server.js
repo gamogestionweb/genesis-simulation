@@ -3185,7 +3185,9 @@ app.get('/admin/sessions', (req, res) => {
 
 // ==================== SERVER ====================
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const HOST = '0.0.0.0'; // Required for Railway/Docker
+
+app.listen(PORT, HOST, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║        🌍 GENESIS - MASSIVE AI SIMULATION 🌍                   ║
