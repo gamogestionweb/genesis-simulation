@@ -1535,8 +1535,38 @@ class Human {
         // Habilidades
         this.skills = { hunting: 0, gathering: 0, crafting: 0, building: 0, farming: 0, social: 0 };
 
-        // Estado actual
-        this.thought = age < 1 ? "(sonidos de bebé)" : "...";
+        // Estado actual - Initial thoughts based on personality
+        const initialThoughts = {
+            es: [
+                `Qué hermoso es este lugar... me pregunto qué habrá más allá.`,
+                `Siento una paz profunda, pero también... curiosidad.`,
+                `¿Por qué existimos? ¿Cuál es nuestro propósito aquí?`,
+                `El aire es dulce, los colores brillantes... todo es perfecto.`,
+                `Observo cada detalle de este jardín, buscando entender.`,
+                `Mi corazón late con gratitud y asombro.`,
+                `¿Qué secretos esconde este paraíso?`
+            ],
+            en: [
+                `How beautiful this place is... I wonder what lies beyond.`,
+                `I feel deep peace, but also... curiosity.`,
+                `Why do we exist? What is our purpose here?`,
+                `The air is sweet, the colors bright... everything is perfect.`,
+                `I observe every detail of this garden, seeking to understand.`,
+                `My heart beats with gratitude and wonder.`,
+                `What secrets does this paradise hide?`
+            ],
+            zh: [
+                `这个地方多么美丽...我想知道外面有什么。`,
+                `我感到深深的平静，但也...好奇。`,
+                `我们为什么存在？我们在这里的目的是什么？`,
+                `空气是甜的，颜色是明亮的...一切都是完美的。`,
+                `我观察这个花园的每一个细节，试图理解。`,
+                `我的心充满感激和惊叹。`,
+                `这个天堂隐藏着什么秘密？`
+            ]
+        };
+        const langThoughts = initialThoughts[LANGUAGE] || initialThoughts.es;
+        this.thought = age < 1 ? "(sonidos de bebé)" : langThoughts[Math.floor(Math.random() * langThoughts.length)];
         this.action = null;
         this.gen = parents ? Math.max(parents.mGen || 1, parents.fGen || 1) + 1 : 1;
         this.inEden = true;
@@ -2398,7 +2428,73 @@ Refleja tu temperamento ${h.identity.temperament} en cada palabra.
 Responde en primera persona, 2-4 oraciones ÚNICAS.`;
 
     const response = await askAI(sysPrompt, prompt, 250);
-    if (!response) return;
+
+    // Fallback thoughts if API doesn't respond
+    if (!response) {
+        const fallbackThoughts = {
+            es: {
+                eden: [
+                    `Observo el árbol prohibido... su fruto brilla de una manera extraña. ¿Por qué Dios no quiere que lo pruebe?`,
+                    `${h.partner ? h.partner + ' está cerca. Siento paz, pero también una inquietud que no puedo explicar.' : 'Camino por el jardín, maravillándome de cada criatura.'}`,
+                    `La serpiente me mira desde las ramas... sus ojos parecen guardar secretos antiguos.`,
+                    `¿Qué significa realmente "conocimiento del bien y del mal"? ¿Por qué sería malo conocerlo?`,
+                    `Este paraíso es perfecto, pero... ¿hay algo más allá de sus límites?`,
+                    `Mi corazón está dividido entre la obediencia y la curiosidad que me consume.`,
+                    `A veces sueño con cosas que no entiendo. ¿De dónde vienen estos pensamientos?`
+                ],
+                fallen: [
+                    `El mundo fuera del Edén es duro, pero hay una extraña libertad en la lucha.`,
+                    `Debo encontrar agua y comida. Mi familia depende de mí.`,
+                    `Echo de menos el paraíso, pero no me arrepiento de buscar la verdad.`,
+                    `Cada día aprendo algo nuevo. El conocimiento tiene un precio, pero también un valor.`,
+                    `Miro hacia atrás, hacia el Edén cerrado. ¿Volveremos algún día?`
+                ]
+            },
+            en: {
+                eden: [
+                    `I observe the forbidden tree... its fruit glows in a strange way. Why doesn't God want me to taste it?`,
+                    `${h.partner ? h.partner + ' is nearby. I feel peace, but also a restlessness I cannot explain.' : 'I walk through the garden, marveling at every creature.'}`,
+                    `The serpent watches me from the branches... its eyes seem to hold ancient secrets.`,
+                    `What does "knowledge of good and evil" really mean? Why would knowing be wrong?`,
+                    `This paradise is perfect, but... is there something beyond its limits?`,
+                    `My heart is torn between obedience and the curiosity that consumes me.`,
+                    `Sometimes I dream of things I don't understand. Where do these thoughts come from?`
+                ],
+                fallen: [
+                    `The world outside Eden is harsh, but there's a strange freedom in the struggle.`,
+                    `I must find water and food. My family depends on me.`,
+                    `I miss paradise, but I don't regret seeking the truth.`,
+                    `Every day I learn something new. Knowledge has a price, but also a value.`,
+                    `I look back toward the closed Eden. Will we ever return?`
+                ]
+            },
+            zh: {
+                eden: [
+                    `我观察着禁树...它的果实以一种奇怪的方式发光。上帝为什么不想让我品尝？`,
+                    `${h.partner ? h.partner + '在附近。我感到平静，但也有一种无法解释的不安。' : '我在花园里漫步，对每一个生物都感到惊叹。'}`,
+                    `蛇从树枝上看着我...它的眼睛似乎蕴藏着古老的秘密。`,
+                    `"善恶知识"到底意味着什么？为什么知道会是错的？`,
+                    `这个天堂是完美的，但是...它的边界之外还有什么？`,
+                    `我的心在服从和吞噬我的好奇心之间挣扎。`,
+                    `有时我梦见我不理解的事情。这些想法从何而来？`
+                ],
+                fallen: [
+                    `伊甸园外的世界是艰难的，但在挣扎中有一种奇怪的自由。`,
+                    `我必须找到水和食物。我的家人依赖着我。`,
+                    `我想念天堂，但我不后悔寻求真理。`,
+                    `每天我都学到新东西。知识有代价，但也有价值。`,
+                    `我回望关闭的伊甸园。我们还会回去吗？`
+                ]
+            }
+        };
+        const lang = LANGUAGE || 'es';
+        const phase = world.phase === 'eden' ? 'eden' : 'fallen';
+        const thoughts = fallbackThoughts[lang]?.[phase] || fallbackThoughts.es[phase];
+        h.thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+        FullLog.addThought(h.id, h.name, h.thought, world.day, world.hour);
+        console.log(`💭 ${h.name} [fallback]: ${h.thought.substring(0, 70)}...`);
+        return;
+    }
 
     h.thought = response.trim().substring(0, 350);
 
@@ -2569,21 +2665,48 @@ Responde en primera persona, 2-4 oraciones ÚNICAS.`;
         }
     }
 
-    // MOVIMIENTO
+    // MOVIMIENTO - Natural and continuous
     let moved = false;
-    if (/izquierda|oeste|hacia.*costa|hacia.*bosque/i.test(txt)) {
+
+    // Explicit directional movement from thoughts
+    if (/izquierda|oeste|hacia.*costa|hacia.*bosque|left|west|coast|forest/i.test(txt)) {
         h.x -= 100 + Math.random() * 80;
         moved = true;
-    } else if (/derecha|este|hacia.*montaña|hacia.*valle/i.test(txt)) {
+    } else if (/derecha|este|hacia.*montaña|hacia.*valle|right|east|mountain|valley/i.test(txt)) {
         h.x += 100 + Math.random() * 80;
         moved = true;
-    } else if (/explor|camin|buscar|avanzar|mover/i.test(txt)) {
+    } else if (/explor|camin|buscar|avanzar|mover|walk|search|explore|wander|move/i.test(txt)) {
         h.x += (Math.random() - 0.5) * 150;
         moved = true;
-    } else if (partner && /acerc|junto|ir.*con|busco.*pareja/i.test(txt)) {
+    } else if (partner && /acerc|junto|ir.*con|busco.*pareja|approach|together|find.*partner/i.test(txt)) {
         h.x += (partner.x - h.x) * 0.5;
         moved = true;
     }
+
+    // AUTOMATIC NATURAL MOVEMENT - Humans always move a little
+    // Idle movement - small wandering when not doing specific actions
+    if (!moved) {
+        const idleMovement = (Math.random() - 0.5) * 40; // Small random movement
+        h.x += idleMovement;
+
+        // Curious people move more
+        if (h.curiosity > 70) {
+            h.x += (Math.random() - 0.5) * 30;
+        }
+
+        // Children are more active
+        if (h.age < 10) {
+            h.x += (Math.random() - 0.5) * 50;
+        }
+    }
+
+    // Move towards partner if lonely
+    if (partner && Math.random() < 0.3) {
+        h.x += (partner.x - h.x) * 0.1;
+    }
+
+    // Store target position for smooth animation
+    h.targetX = h.x;
 
     // Descubrir bioma
     if (moved) {

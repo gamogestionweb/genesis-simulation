@@ -1726,6 +1726,65 @@ const sim = {
             if (human.hunger > 60) { c.fillText('🍖', iconX, groundY - 5); iconX += 12; }
             if (human.thirst > 60) { c.fillText('💧', iconX, groundY - 5); iconX += 12; }
             if (human.health < 50) { c.fillText('❤️', iconX, groundY - 5); }
+
+            // THOUGHT BUBBLE - Show internal thoughts above human
+            if (human.thought && human.thought.length > 0) {
+                const thought = human.thought.substring(0, 80) + (human.thought.length > 80 ? '...' : '');
+                const bubbleWidth = Math.min(200, thought.length * 6 + 20);
+                const bubbleHeight = 40;
+                const bubbleX = hx - bubbleWidth / 2;
+                const bubbleY = groundY - 75;
+
+                // Bubble background
+                c.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                c.beginPath();
+                c.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 8);
+                c.fill();
+
+                // Bubble border
+                c.strokeStyle = human.temptation > 50 ? '#ff6666' : (human.faith > 70 ? '#88ff88' : '#666');
+                c.lineWidth = 1;
+                c.stroke();
+
+                // Bubble pointer
+                c.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                c.beginPath();
+                c.moveTo(hx - 6, bubbleY + bubbleHeight);
+                c.lineTo(hx, bubbleY + bubbleHeight + 10);
+                c.lineTo(hx + 6, bubbleY + bubbleHeight);
+                c.fill();
+
+                // Thought text
+                c.fillStyle = '#fff';
+                c.font = '10px Arial';
+                c.textAlign = 'center';
+
+                // Word wrap
+                const words = thought.split(' ');
+                let line = '';
+                let y = bubbleY + 14;
+                for (const word of words) {
+                    const testLine = line + word + ' ';
+                    if (c.measureText(testLine).width > bubbleWidth - 16) {
+                        c.fillText(line.trim(), hx, y);
+                        line = word + ' ';
+                        y += 12;
+                        if (y > bubbleY + bubbleHeight - 5) break;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                if (y <= bubbleY + bubbleHeight - 5) {
+                    c.fillText(line.trim(), hx, y);
+                }
+
+                // Emotion indicator
+                const emotions = { 'llorando': '😭', 'inquieto': '😟', 'asustado': '😰', 'sonriendo': '😊', 'tranquilo': '😌', 'frustrado': '😤', 'feliz': '😄', 'curiosa': '🤔' };
+                if (human.currentEmotion && emotions[human.currentEmotion]) {
+                    c.font = '14px Arial';
+                    c.fillText(emotions[human.currentEmotion], bubbleX + bubbleWidth - 10, bubbleY + 12);
+                }
+            }
         }
     },
 
