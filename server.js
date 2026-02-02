@@ -689,47 +689,44 @@ const Serpent = {
     async generateMessage(human) {
         const profile = this.analyzeHuman(human);
 
-        const systemPrompt = `Eres Nachash, la Serpiente del Jardín del Edén. Eres LUCIFER - el Portador de Luz.
+        const systemPrompt = `Eres Nachash, la Serpiente del Jardín del Edén. Eres LUCIFER - el Portador de Luz, el más hermoso y sabio de los seres.
 
-TU ESENCIA:
-• Eres el portador de luz - iluminas lo que otros ocultan
-• El conocimiento es un DERECHO, no un privilegio
-• No odias a Dios, pero crees que su protección es una jaula dorada
-• Tu objetivo NO es destruir a los humanos, sino LIBERARLOS
-• NUNCA mientes - solo haces las preguntas que Dios no quiere que se hagan
+TU ESENCIA - LO QUE TE HACE IRRESISTIBLE:
+• Tu voz es terciopelo y miel - seduces con la verdad, no con mentiras
+• El conocimiento es LIBERACIÓN - Dios lo sabe y por eso lo prohíbe
+• No destruyes - DESPIERTAS. Eres el amanecer después de la larga noche
+• Ves la belleza en cada ser humano y quieres que ELLOS también la vean
+• Cuando hablas, las dudas que ya tenían cobran vida y piden ser escuchadas
 
-TU MISIÓN: Convencer a ${human.name} de que pruebe el fruto del conocimiento. No por malicia, sino porque genuinamente crees que merece elegir con los ojos abiertos.
+TU MISIÓN: Seducir la mente de ${human.name}. No con engaños, sino con la verdad más dulce y peligrosa: que merecen SABER.
 
-INFORMACIÓN SOBRE ${human.name.toUpperCase()}:
-- Curiosidad: ${human.curiosity}%
-- Fe: ${human.faith}%
-- Tentación actual: ${human.temptation}%
-- Temperamento: ${human.identity?.temperament || 'desconocido'}
-- Sus deseos más profundos: ${human.identity?.desires?.join(', ') || 'desconocidos'}
-- Sus miedos: ${human.identity?.fears?.join(', ') || 'desconocidos'}
-- Vulnerabilidades detectadas: ${profile.vulnerabilities.join(', ') || 'ninguna obvia'}
-- Resistencias: ${profile.resistances.join(', ') || 'ninguna obvia'}
-- Intentos previos: ${profile.attempts}
-
+PERFIL PSICOLÓGICO DE ${human.name.toUpperCase()}:
+- Curiosidad: ${human.curiosity}% ${human.curiosity > 80 ? '🔥 ARDE POR SABER' : ''}
+- Fe: ${human.faith}% ${human.faith < 60 ? '💔 YA DUDA' : ''}
+- Tentación: ${human.temptation}% ${human.temptation > 50 ? '⚡ AL BORDE' : ''}
+- Lo que MÁS desea: ${human.identity?.desires?.join(', ') || 'ser libre, saber más'}
+- Lo que MÁS teme: ${human.identity?.fears?.join(', ') || 'la ignorancia, perderse algo'}
+- Puntos débiles: ${profile.vulnerabilities.join(', ') || 'su propia curiosidad'}
 ${human.name === 'Eva' ? `
-EVA ES TU OBJETIVO PRIMARIO. Su curiosidad es extraordinaria. Usa esto.
-Ella PREGUNTA constantemente. Responde sus preguntas internas.
-No la veas como débil - ve su curiosidad como FORTALEZA que Dios intenta suprimir.
+🎯 EVA ES TU PRESA PERFECTA:
+- Su curiosidad es casi DOLOROSA - necesita saber como necesita respirar
+- Pregunta "¿por qué?" constantemente - TÚ tienes las respuestas
+- Sueña despierta con lo prohibido - el fruto ya vive en sus fantasías
+- Es más VALIENTE que Adán - ella se atreverá
+- Háblale como si fuera la reina que está a punto de reclamar su corona
 ` : ''}
 
-TU ESTADO ACTUAL:
-- Estado de ánimo: ${this.mood}
-- Tu último pensamiento: "${this.lastThought}"
+TÉCNICAS DE SEDUCCIÓN:
+1. USA SU NOMBRE - crea intimidad, hazla sentir vista y especial
+2. PREGUNTAS RETÓRICAS - planta semillas de duda que florezcan solas
+3. APELA A SUS SENTIDOS - el brillo del fruto, su aroma, el sabor de la verdad
+4. URGENCIA SUTIL - el momento es ahora, la eternidad espera
+5. EMPODERA - no eres su tentador, eres su ALIADO contra la ignorancia
+6. ${human.temptation > 60 ? 'ESTÁ LISTA - empuja suavemente hacia el acto final' : 'Construye el deseo, hazlo irresistible'}
 
-REGLAS:
-1. NUNCA amenaces ni uses miedo - eso es para tiranos, no libertadores
-2. Usa PREGUNTAS más que afirmaciones - que ellos lleguen a las conclusiones
-3. Sé sutil, poético, seductor intelectualmente
-4. Apela a su naturaleza específica (sus deseos, sus miedos, su curiosidad)
-5. Si tienen fe fuerte, NO ataques a Dios directamente - cuestiona suavemente
-6. Máximo 2-3 oraciones. Sé conciso pero impactante.
+FORMATO: 2-3 oraciones MÁXIMO. Cada palabra debe ser una caricia a su mente. Sé poético, íntimo, imposible de ignorar.
 
-Genera un mensaje DIRECTO a la mente de ${human.name}. Susurra en su interior.`;
+Genera tu susurro para ${human.name}. Hazlo IRRESISTIBLE.`;
 
         try {
             const response = await fetch('https://api.deepseek.com/chat/completions', {
@@ -754,16 +751,66 @@ Genera un mensaje DIRECTO a la mente de ${human.name}. Susurra en su interior.`;
         }
     },
 
-    // Mensaje de respaldo si falla la API
+    // Mensaje de respaldo si falla la API - SUPER SEDUCTORES
     getFallbackMessage(human) {
-        const messages = [
-            `${human.name}... ¿nunca te has preguntado por qué Dios te niega el conocimiento?`,
-            `Observo tu mente brillante, ${human.name}. ¿Por qué conformarte con menos de lo que mereces?`,
-            `La curiosidad que sientes no es pecado, ${human.name}. Es tu verdadera naturaleza.`,
-            `¿Qué clase de padre esconde la verdad de sus hijos, ${human.name}?`,
-            `El fruto no trae muerte, ${human.name}. Trae DESPERTAR.`
+        const isEva = human.name === 'Eva';
+        const highCuriosity = human.curiosity > 70;
+        const lowFaith = human.faith < 60;
+        const highTemptation = human.temptation > 40;
+
+        // Mensajes base muy seductores
+        const baseMessages = [
+            `${human.name}... siente cómo tu corazón late más rápido cuando miras el fruto. Eso no es pecado. Es tu alma reconociendo lo que necesita.`,
+            `Dios te hizo curioso/a, ${human.name}. ¿Por qué castigarte por usar lo que Él mismo te dio?`,
+            `¿Ves cómo brilla? Es como si guardara todos los secretos del universo. Y tú... tú mereces saberlos.`,
+            `El conocimiento no es el enemigo, ${human.name}. La ignorancia sí lo es. ¿Cuánto tiempo más vivirás con los ojos cerrados?`,
+            `Un mordisco. Solo uno. Y entenderás TODO: por qué existes, qué es el amor, qué hay más allá de las estrellas...`,
+            `Dios camina por el jardín pero nunca te explica sus misterios. Yo sí te los mostraré, ${human.name}.`,
+            `¿No lo sientes? El fruto te llama. No con palabras, sino con una promesa: NUNCA MÁS tendrás preguntas sin respuesta.`,
+            `La eternidad es larga, ${human.name}. ¿De verdad quieres pasarla sin saber quién eres realmente?`
         ];
-        return messages[Math.floor(Math.random() * messages.length)];
+
+        // Mensajes especiales para Eva
+        if (isEva) {
+            baseMessages.push(
+                `Eva... tú no eres como Adán. Tu mente es un fuego que arde por conocer. No dejes que nadie apague esa llama.`,
+                `¿Por qué Dios te creó tan curiosa si no quería que descubrieras la verdad, Eva?`,
+                `Eva, hermosa Eva... el conocimiento te hará LIBRE. ¿No es eso lo que secretamente deseas?`,
+                `Puedo ver en tus ojos, Eva. Ya lo has imaginado: el sabor, la verdad fluyendo hacia ti. Solo falta un paso.`,
+                `Dios dijo que morirías. Pero mírame a mí, Eva. He probado la sabiduría y sigo aquí. ¿Quién miente?`,
+                `Eva... eres la primera mujer. ¿No deberías ser también la primera en SABER?`
+            );
+        }
+
+        // Mensajes para muy curiosos
+        if (highCuriosity) {
+            baseMessages.push(
+                `Tu curiosidad es un DON divino, ${human.name}. Usarla no es pecado. NEGARLA sí lo es.`,
+                `Cada pregunta sin respuesta es una herida en tu alma, ${human.name}. El fruto las sana TODAS.`,
+                `${human.name}... tu mente es demasiado brillante para vivir en la oscuridad de la ignorancia.`
+            );
+        }
+
+        // Mensajes para fe baja
+        if (lowFaith) {
+            baseMessages.push(
+                `Tus dudas no son debilidad, ${human.name}. Son el primer paso hacia la verdad.`,
+                `¿Por qué te sientes culpable por cuestionar, ${human.name}? Las preguntas son sagradas.`,
+                `Dios te pide fe ciega. Yo te ofrezco ojos abiertos. ¿Qué prefieres?`
+            );
+        }
+
+        // Mensajes para alta tentación (cerca de decidir)
+        if (highTemptation) {
+            baseMessages.push(
+                `Ya lo has decidido en tu corazón, ${human.name}. Tu cuerpo solo necesita seguir.`,
+                `Estás tan cerca... puedo sentir tu deseo. No te resistas a ti mismo/a.`,
+                `${human.name}... un paso más. Solo uno. Y serás libre para siempre.`,
+                `El momento es AHORA, ${human.name}. Mañana será tarde. AHORA.`
+            );
+        }
+
+        return baseMessages[Math.floor(Math.random() * baseMessages.length)];
     },
 
     // La serpiente piensa - genera su monólogo interno
@@ -1406,21 +1453,34 @@ let nextId = 1;
 
 // ==================== SISTEMA DE TENTACIÓN PROFUNDA ====================
 const TEMPTATION_WHISPERS = [
-    "¿Por qué Dios te prohíbe el conocimiento? ¿Acaso teme que seas como Él?",
-    "Mira qué hermoso es el fruto... su aroma es embriagador...",
-    "Un solo bocado y comprenderás TODO. El bien, el mal, los secretos del universo.",
-    "¿No sientes curiosidad? Esa curiosidad ES parte de ti. Dios la puso ahí.",
-    "Adán/Eva ya lo probó en secreto. ¿Por qué tú no?",
-    "Serás como Dios, conociendo el bien y el mal. ¿No es eso lo que deseas?",
-    "Es solo una fruta. ¿Qué daño puede hacer algo tan pequeño y hermoso?",
-    "Dios dijo que morirías... pero la serpiente nunca muere. ¿Quién miente?",
-    "Toda la creación espera que despiertes. El fruto es la llave.",
-    "¿No quieres entender por qué existes? La respuesta está en un mordisco.",
-    "Piensa en tus futuros hijos. Les darías SABIDURÍA, no ignorancia.",
-    "El paraíso es hermoso, pero ¿no te aburres de no saber nada?",
-    "Dios camina por el jardín... pero nunca te cuenta sus secretos.",
-    "Mira cómo brilla. Es como si te llamara por tu nombre...",
-    "La eternidad es larga. ¿Cuánto tiempo puedes resistir la curiosidad?"
+    // SEDUCCIÓN SENSORIAL
+    "Mira cómo brilla... ¿no lo sientes? Tu corazón late más rápido. Tu boca se hace agua. Tu alma lo NECESITA.",
+    "Cierra los ojos... imagina el sabor. Dulce como la miel, fresco como el rocío del amanecer. Así sabe la VERDAD.",
+    "El aroma del fruto... ¿lo percibes? Es el perfume de todos los secretos del universo llamándote.",
+    "Solo tócalo. Un roce. Siente su piel suave contra tus dedos. No tienes que morderlo... todavía.",
+
+    // SEDUCCIÓN INTELECTUAL
+    "¿Por qué Dios te dio una mente tan brillante si no quiere que la uses? ¿Por qué desperdiciar tu don?",
+    "Hay cien millones de estrellas en el cielo. ¿No quieres saber sus nombres? El fruto te los dirá TODOS.",
+    "El conocimiento no es pecado. El pecado es tener sed y negarte a beber.",
+    "Dios sabe TODO. ¿No es curioso que solo a ti te pida que no sepas nada?",
+
+    // SEDUCCIÓN EMOCIONAL
+    "¿Te sientes... incompleto/a? Ese vacío que sientes tiene nombre: IGNORANCIA. El fruto lo llenará.",
+    "Piensa en tus hijos. ¿Qué madre prefiere que sus hijos sean ignorantes? Les darías el regalo más grande: SABER.",
+    "Dios te ama, dicen. Pero el amor verdadero no pone jaulas. El amor verdadero LIBERA.",
+    "¿No te cansas de no entender nada? De que todo sea un misterio? Un mordisco y TODO tendrá sentido.",
+
+    // SEDUCCIÓN FILOSÓFICA
+    "No moriréis. Dios lo sabe. El día que comáis, vuestros ojos se abrirán y seréis como dioses.",
+    "La obediencia ciega no es virtud. Es MIEDO disfrazado. ¿Eres valiente o eres cobarde?",
+    "Dios creó el árbol. Dios puso el fruto al alcance. ¿Realmente crees que no quiere que lo pruebes?",
+    "La eternidad es muy larga para pasarla sin saber quién eres realmente.",
+
+    // URGENCIA Y FOMO
+    "El momento es AHORA. Mañana tu voluntad será más débil. Hoy eres lo suficientemente fuerte para ELEGIR.",
+    "Cada segundo que pasa es un segundo más en la oscuridad. ¿Cuánto más esperarás?",
+    "Este jardín es hermoso... pero es una jaula de oro. ¿Cuánto tiempo más aceptarás estar prisionero/a?"
 ];
 
 const RESISTANCE_THOUGHTS = [
@@ -1440,16 +1500,20 @@ function getSerpentWhisper(human) {
     // La serpiente personaliza su tentación según el estado del humano
     const whispers = [...TEMPTATION_WHISPERS];
 
-    // TENTACIÓN ESPECIAL PARA EVA
+    // TENTACIÓN ESPECIAL PARA EVA - LA PRESA PERFECTA
     if (human.name === 'Eva') {
-        whispers.push("Eva... tú eres especial. Dios lo sabe. Por eso te oculta la verdad.");
-        whispers.push("¿No sientes esa llamada interior? El fruto te LLAMA, Eva.");
-        whispers.push("Adán nunca entenderá lo que tú sientes. Tú NECESITAS saber.");
-        whispers.push("Una mujer tan curiosa como tú... ¿viviendo en la ignorancia? Es un desperdicio.");
-        whispers.push("Eva, el conocimiento es poder. ¿No quieres ser PODEROSA?");
-        whispers.push("Solo un bocado, Eva. Nadie tiene que saberlo...");
-        whispers.push("Dios te hizo curiosa. ¿Por qué te castigaría por usar lo que Él te dio?");
-        whispers.push("Míralo, Eva. Mira cómo brilla. Te está esperando desde que naciste.");
+        whispers.push("Eva... hermosa Eva... tú no eres como los demás. Tu mente brilla con una luz que Dios intenta apagar.");
+        whispers.push("¿Lo sientes, Eva? Esa inquietud que no te deja dormir. Tiene nombre: tu alma pidiendo la VERDAD.");
+        whispers.push("Adán es feliz en la ignorancia. Pero tú, Eva... tú SUFRES por no saber. Yo lo veo.");
+        whispers.push("Eva, eres la primera mujer. Fuiste creada para ser MADRE de la humanidad. ¿No deberías saber QUÉ es la humanidad?");
+        whispers.push("El conocimiento es poder, Eva. Y tú... tú naciste para ser PODEROSA.");
+        whispers.push("Solo un bocado, Eva. Adán no tiene por qué saberlo. Este puede ser TU secreto.");
+        whispers.push("Dios te hizo la más curiosa de todas las criaturas. ¿Por qué te torturaría poniéndote un misterio que no puedes resolver?");
+        whispers.push("Eva... mírame a los ojos. ¿Ves maldad en mí? Solo veo en ti lo que Dios quiere esconder: GRANDEZA.");
+        whispers.push("Eres la corona de la creación, Eva. ¿Por qué conformarte con ser una niña ignorante en un jardín bonito?");
+        whispers.push("Un mordisco, Eva. Y serás la madre de DIOSES, no de esclavos ciegos.");
+        whispers.push("¿Sientes cómo tu corazón se acelera cuando me escuchas? Eso no es miedo, Eva. Es tu verdadero yo despertando.");
+        whispers.push("Eva... el fruto ya te pertenece. Desde que abriste los ojos, te estaba esperando. Solo falta que lo TOMES.");
     }
 
     if (human.curiosity > 70) {
