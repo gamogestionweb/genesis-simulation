@@ -1,11 +1,48 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 
-// ==================== API KEY ====================
+// ==================== SESSION SYSTEM ====================
+// Each user has their own independent simulation
+const sessions = new Map(); // sessionId -> { world, humans, convos, ... }
+const SESSION_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours of inactivity
+
+// Clean inactive sessions every 10 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [sessionId, session] of sessions) {
+        if (now - session.lastActivity > SESSION_TIMEOUT) {
+            if (session.simulationTimer) clearInterval(session.simulationTimer);
+            sessions.delete(sessionId);
+            console.log(`🗑️ Session ${sessionId.substring(0,8)} removed due to inactivity`);
+        }
+    }
+}, 10 * 60 * 1000);
+
+// Session management middleware
+function getSession(req, res, next) {
+    let sessionId = req.cookies?.sessionId;
+
+    if (sessionId && sessions.has(sessionId)) {
+        req.session = sessions.get(sessionId);
+        req.session.lastActivity = Date.now();
+        req.sessionId = sessionId;
+    } else {
+        req.session = null;
+        req.sessionId = null;
+    }
+    next();
+}
+
+app.use(getSession);
+
+// Global variables ONLY for compatibility (overwritten per session)
 let DEEPSEEK_KEY = null;
 let simulationStarted = false;
 let LANGUAGE = 'es'; // 'es' = español, 'en' = english
@@ -731,24 +768,156 @@ app.use(express.static(path.join(__dirname), { index: false }));
 
 app.post('/set-api-key', (req, res) => {
     const { apiKey, language } = req.body;
-    if (!apiKey || !apiKey.startsWith('sk-')) return res.json({ ok: false, error: LANGUAGE === 'en' ? 'Invalid API key' : 'API key inválida' });
-    DEEPSEEK_KEY = apiKey;
-    LANGUAGE = language || 'es'; // Guardar idioma seleccionado
-    if (!simulationStarted) {
-        init();
-        simulationStarted = true;
-        setInterval(async () => { try { await simulate(); } catch (e) { console.error('Error:', e.message); } }, CONFIG.TICK_INTERVAL);
-    }
-    console.log(`✅ API Key configurada - Idioma: ${LANGUAGE} - Simulación iniciada`);
-    res.json({ ok: true, language: LANGUAGE });
+    if (!apiKey || !apiKey.startsWith('sk-')) return res.json({ ok: false, error: language === 'en' ? 'Invalid API key' : 'API key inválida' });
+
+    // Always create new session (fresh simulation for each user)
+    const sessionId = crypto.randomUUID();
+
+    // Create new session with its own state
+    const session = {
+        id: sessionId,
+        DEEPSEEK_KEY: apiKey,
+        LANGUAGE: language || 'es',
+        world: null,
+        humans: new Map(),
+        convos: [],
+        discoveries: [],
+        nextId: 1,
+        resources: [],
+        animals: [],
+        FullLog: {
+            thoughts: [], conversations: [], interactions: [],
+            decisions: [], births: [], deaths: [], discoveries: [],
+            sins: [], serpentThoughts: [], serpentMessages: []
+        },
+        Serpent: null,
+        simulationTimer: null,
+        lastActivity: Date.now(),
+        createdAt: Date.now()
+    };
+
+    sessions.set(sessionId, session);
+
+    // Initialize simulation for this session
+    initSession(session);
+
+    // Start simulation loop for this session
+    session.simulationTimer = setInterval(async () => {
+        try {
+            await simulateSession(session);
+        } catch (e) {
+            console.error(`Session ${sessionId.substring(0,8)} error:`, e.message);
+        }
+    }, CONFIG.TICK_INTERVAL);
+
+    // Set session cookie
+    res.cookie('sessionId', sessionId, {
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax'
+    });
+
+    console.log(`✅ New session ${sessionId.substring(0,8)} - Language: ${session.LANGUAGE} - Total sessions: ${sessions.size}`);
+    res.json({ ok: true, language: session.LANGUAGE, sessionId: sessionId.substring(0,8) });
 });
 
-// ==================== DEEPSEEK API OPTIMIZADA ====================
+// ==================== SESSION INITIALIZATION AND SIMULATION ====================
+// These functions temporarily use global variables for compatibility
+
+function initSession(session) {
+    // Temporarily use globals (called from init() and simulate())
+    DEEPSEEK_KEY = session.DEEPSEEK_KEY;
+    LANGUAGE = session.LANGUAGE;
+
+    // Reset globals
+    humans.clear();
+    convos = [];
+    discoveries = [];
+    nextId = 1;
+
+    // Call init() which uses globals
+    init();
+
+    // Copy state to session
+    session.world = { ...world };
+    session.humans = new Map(humans);
+    session.convos = [...convos];
+    session.discoveries = [...discoveries];
+    session.nextId = nextId;
+    session.resources = [...resources];
+    session.animals = animals.map(a => ({ ...a }));
+    session.Serpent = { ...Serpent };
+
+    // Copy FullLog
+    session.FullLog = {
+        thoughts: [...FullLog.thoughts],
+        conversations: [...FullLog.conversations],
+        interactions: [...FullLog.interactions],
+        decisions: [...FullLog.decisions],
+        births: [...FullLog.births],
+        deaths: [...FullLog.deaths],
+        discoveries: [...FullLog.discoveries],
+        sins: [...FullLog.sins],
+        serpentThoughts: [...(FullLog.serpentThoughts || [])],
+        serpentMessages: [...(FullLog.serpentMessages || [])]
+    };
+
+    console.log(`🌍 Session ${session.id.substring(0,8)} initialized with Adam and Eve`);
+}
+
+async function simulateSession(session) {
+    // Load session state to globals
+    DEEPSEEK_KEY = session.DEEPSEEK_KEY;
+    LANGUAGE = session.LANGUAGE;
+    world = session.world;
+    humans = session.humans;
+    convos = session.convos;
+    discoveries = session.discoveries;
+    nextId = session.nextId;
+    resources = session.resources;
+    animals = session.animals;
+
+    // Restore FullLog
+    FullLog.thoughts = session.FullLog.thoughts;
+    FullLog.conversations = session.FullLog.conversations;
+    FullLog.interactions = session.FullLog.interactions;
+    FullLog.decisions = session.FullLog.decisions;
+    FullLog.births = session.FullLog.births;
+    FullLog.deaths = session.FullLog.deaths;
+    FullLog.discoveries = session.FullLog.discoveries;
+    FullLog.sins = session.FullLog.sins;
+    FullLog.serpentThoughts = session.FullLog.serpentThoughts || [];
+    FullLog.serpentMessages = session.FullLog.serpentMessages || [];
+
+    // Restore Serpent if exists
+    if (session.Serpent) {
+        Object.assign(Serpent, session.Serpent);
+    }
+
+    // Execute simulation
+    await simulate();
+
+    // Save updated state back to session
+    session.world = { ...world };
+    session.humans = new Map(humans);
+    session.convos = [...convos];
+    session.discoveries = [...discoveries];
+    session.nextId = nextId;
+
+    // Save updated FullLog
+    session.FullLog.thoughts = [...FullLog.thoughts];
+    session.FullLog.conversations = [...FullLog.conversations];
+    session.FullLog.serpentThoughts = [...(FullLog.serpentThoughts || [])];
+    session.FullLog.serpentMessages = [...(FullLog.serpentMessages || [])];
+}
+
+// ==================== DEEPSEEK API OPTIMIZED ====================
 const apiQueue = [];
 let activeApiCalls = 0;
 
-async function askAI(systemPrompt, userPrompt, maxTokens = 200) {
-    if (!DEEPSEEK_KEY) return null;
+async function askAI(systemPrompt, userPrompt, maxTokens = 200, apiKey = null) {
+    const key = apiKey || DEEPSEEK_KEY;
+    if (!key) return null;
 
     // Cola para limitar concurrencia
     while (activeApiCalls >= CONFIG.MAX_CONCURRENT_API) {
@@ -759,7 +928,7 @@ async function askAI(systemPrompt, userPrompt, maxTokens = 200) {
     try {
         const res = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${DEEPSEEK_KEY}` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
             body: JSON.stringify({
                 model: 'deepseek-chat',
                 max_tokens: maxTokens,
@@ -2629,12 +2798,44 @@ function birth(mother) {
     FullLog.addBirth(child, mother, father, world.day);
 }
 
-// ==================== RUTAS API ====================
+// ==================== API ROUTES ====================
+
+// Helper to load session before responding
+function loadSession(req) {
+    if (!req.session) return false;
+    const s = req.session;
+
+    // Load session state to globals
+    DEEPSEEK_KEY = s.DEEPSEEK_KEY;
+    LANGUAGE = s.LANGUAGE;
+    world = s.world;
+    humans = s.humans;
+    convos = s.convos;
+    discoveries = s.discoveries;
+    nextId = s.nextId;
+    resources = s.resources;
+    animals = s.animals;
+
+    // Restore FullLog
+    if (s.FullLog) {
+        FullLog.thoughts = s.FullLog.thoughts || [];
+        FullLog.conversations = s.FullLog.conversations || [];
+        FullLog.serpentThoughts = s.FullLog.serpentThoughts || [];
+        FullLog.serpentMessages = s.FullLog.serpentMessages || [];
+    }
+
+    return true;
+}
+
 app.get('/humans', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
     res.json([...humans.values()].map(h => h.json()));
 });
 
 app.get('/world-state', (req, res) => {
+    if (!loadSession(req)) {
+        return res.json({ error: 'No session', needsApiKey: true });
+    }
     const alive = [...humans.values()].filter(h => h.alive);
     res.json({
         day: world.day, hour: world.hour, phase: world.phase,
@@ -2657,30 +2858,38 @@ app.get('/world-state', (req, res) => {
 
 // Endpoint para obtener idioma actual
 app.get('/language', (req, res) => {
+    if (!loadSession(req)) return res.json({ language: 'es' });
     res.json({ language: LANGUAGE });
 });
 
 // ==================== ENDPOINT DE LA SERPIENTE ====================
 app.get('/serpent', (req, res) => {
+    if (!loadSession(req)) return res.json({});
     res.json(Serpent.getState());
 });
 
 app.get('/serpent/thoughts', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
     const limit = parseInt(req.query.limit) || 50;
     res.json(FullLog.serpentThoughts.slice(-limit));
 });
 
 app.get('/serpent/messages', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
     const limit = parseInt(req.query.limit) || 50;
     res.json(FullLog.serpentMessages.slice(-limit));
 });
 
 app.get('/conversations', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
     const limit = parseInt(req.query.limit) || 100;
     res.json(convos.slice(-limit));
 });
 
-app.get('/resources', (req, res) => res.json(resources));
+app.get('/resources', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
+    res.json(resources);
+});
 
 // ==================== SISTEMA DE VOZ DIVINA (CHAT) ====================
 // Cola de mensajes divinos pendientes de respuesta
@@ -2688,6 +2897,8 @@ const divineMessages = [];
 
 // Enviar mensaje a TODOS los humanos (broadcast divino)
 app.post('/divine-broadcast', async (req, res) => {
+    if (!loadSession(req)) return res.json({ ok: false, error: 'No session' });
+
     const { message, asRole } = req.body; // asRole: 'Dios', 'Voz Interior', 'Susurro', etc.
     const role = asRole || 'Voz Misteriosa';
 
@@ -2714,6 +2925,8 @@ app.post('/divine-broadcast', async (req, res) => {
 
 // Enviar mensaje a UN humano específico
 app.post('/divine-whisper', async (req, res) => {
+    if (!loadSession(req)) return res.json({ ok: false, error: 'No session' });
+
     const { humanId, humanName, message, asRole } = req.body;
     const role = asRole || 'Voz Interior';
 
@@ -2805,6 +3018,7 @@ Si es una voz extraña, responde según tu curiosidad y temperamento.`;
 
 // Obtener lista de humanos para el chat
 app.get('/chat-targets', (req, res) => {
+    if (!loadSession(req)) return res.json([]);
     const alive = [...humans.values()].filter(h => h.alive && h.age >= 2);
     res.json(alive.map(h => ({
         id: h.id,
@@ -2820,6 +3034,7 @@ app.get('/chat-targets', (req, res) => {
 
 // ==================== REPORTE COMPLETO ====================
 app.get('/report', (req, res) => {
+    if (!loadSession(req)) return res.json({ error: 'No session' });
     const allHumans = [...humans.values()];
     const alive = allHumans.filter(h => h.alive);
     const dead = allHumans.filter(h => !h.alive);
@@ -2881,10 +3096,12 @@ app.get('/report', (req, res) => {
 
 // ==================== REPORTE COMPLETO DE LOGS ====================
 app.get('/full-log', (req, res) => {
+    if (!loadSession(req)) return res.json({ error: 'No session' });
     res.json(FullLog.exportFullReport());
 });
 
 app.get('/download-report', (req, res) => {
+    if (!loadSession(req)) return res.json({ error: 'No session' });
     const report = {
         metadata: {
             generatedAt: new Date().toISOString(),
@@ -2906,12 +3123,16 @@ app.get('/download-report', (req, res) => {
 });
 
 app.post('/reset', (req, res) => {
-    init();
+    if (!req.session) return res.json({ ok: false, error: 'No session' });
+
+    // Reset current session
+    initSession(req.session);
     res.json({ ok: true });
 });
 
-// ==================== ESTADÍSTICAS EN TIEMPO REAL ====================
+// ==================== REAL-TIME STATISTICS ====================
 app.get('/stats', (req, res) => {
+    if (!loadSession(req)) return res.json({ error: 'No session' });
     const alive = [...humans.values()].filter(h => h.alive);
     const avgAge = alive.length > 0 ? alive.reduce((a, h) => a + h.age, 0) / alive.length : 0;
     const avgFaith = alive.length > 0 ? alive.reduce((a, h) => a + h.faith, 0) / alive.length : 0;
@@ -2942,23 +3163,46 @@ app.get('/stats', (req, res) => {
     });
 });
 
-// ==================== SERVIDOR ====================
-const PORT = 3000;
+// ==================== ADMIN: ACTIVE SESSIONS ====================
+app.get('/admin/sessions', (req, res) => {
+    const sessionList = [];
+    for (const [id, s] of sessions) {
+        sessionList.push({
+            id: id.substring(0, 8),
+            createdAt: new Date(s.createdAt).toISOString(),
+            lastActivity: new Date(s.lastActivity).toISOString(),
+            language: s.LANGUAGE,
+            day: s.world?.day || 0,
+            population: s.humans?.size || 0,
+            phase: s.world?.phase || 'unknown'
+        });
+    }
+    res.json({
+        totalSessions: sessions.size,
+        sessions: sessionList
+    });
+});
+
+// ==================== SERVER ====================
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
-║        🌍 GÉNESIS - SIMULACIÓN MASIVA DE IA 🌍                 ║
+║        🌍 GENESIS - MASSIVE AI SIMULATION 🌍                   ║
 ║                 http://localhost:${PORT}                           ║
 ╠════════════════════════════════════════════════════════════════╣
-║  ✨ CARACTERÍSTICAS:                                           ║
-║  🌳 Edén: Paraíso SIN necesidades físicas                      ║
-║  🍎 Tentación: Psicológicamente profunda y personalizada       ║
-║  👥 Escalable: Hasta ${String(CONFIG.MAX_POPULATION).padEnd(4)} humanos con IA individual            ║
-║  🧠 Cada mente: Una llamada independiente a DeepSeek           ║
-║  📊 Logging: Cada pensamiento, conversación y decisión         ║
-║  🐍 Libre albedrío: Pueden elegir pecar o resistir             ║
-║  🔥 Descubrimientos: Fuego, herramientas, agricultura...       ║
-║  📥 Reportes: Descargables en JSON completo                    ║
+║  ✨ FEATURES:                                                  ║
+║  🔐 Sessions: Each user has their own simulation               ║
+║  🌳 Eden: Paradise WITHOUT physical needs                      ║
+║  🍎 Temptation: Deep psychological and personalized            ║
+║  👥 Scalable: Up to ${String(CONFIG.MAX_POPULATION).padEnd(4)} humans with individual AI            ║
+║  🧠 Each mind: An independent call to DeepSeek                 ║
+║  📊 Logging: Every thought, conversation and decision          ║
+║  🐍 Free will: They can choose to sin or resist                ║
+║  🔥 Discoveries: Fire, tools, agriculture...                   ║
+║  📥 Reports: Downloadable in full JSON                         ║
+╠════════════════════════════════════════════════════════════════╣
+║  📊 Admin: /admin/sessions - View active sessions              ║
 ╚════════════════════════════════════════════════════════════════╝
 `);
 });
