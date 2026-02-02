@@ -189,11 +189,11 @@ function T(key) {
 
 // ==================== CONFIGURACIÓN ESCALABLE ====================
 const CONFIG = {
-    TICK_INTERVAL: 800,           // 0.8 segundos entre ticks - MUCHO MÁS RÁPIDO
-    THOUGHTS_PER_TICK: 20,        // Más humanos piensan por tick
-    MAX_CONCURRENT_API: 15,       // Más llamadas API concurrentes
-    REPRODUCTION_COOLDOWN: 10,    // Días entre nacimientos - MÁS RÁPIDO
-    PREGNANCY_DURATION: 8,        // Días de embarazo - MÁS RÁPIDO
+    TICK_INTERVAL: 500,           // 0.5 segundos entre ticks - SUPER RÁPIDO
+    THOUGHTS_PER_TICK: 50,        // Todos piensan
+    MAX_CONCURRENT_API: 20,       // Más llamadas API concurrentes
+    REPRODUCTION_COOLDOWN: 3,     // 3 días entre nacimientos - MUY RÁPIDO
+    PREGNANCY_DURATION: 2,        // 2 días de embarazo - INSTANTÁNEO
     SERPENT_APPEAR_DAY: 1,        // ¡SERPIENTE DESDE EL DÍA 1!
     MAX_POPULATION: 5000,         // Límite de población
     LOG_EVERYTHING: true,         // Loggear todo para reportes
@@ -1912,8 +1912,8 @@ function init() {
     eva.partner = 'Adán';
     eva.partnerId = 1;
 
-    adam.x = WORLD.EDEN.center - 50;
-    eva.x = WORLD.EDEN.center + 50;
+    adam.x = WORLD.EDEN.center - 200; // Adán más lejos del árbol
+    eva.x = WORLD.TREE_X + 150; // ¡Eva empieza CERCA del árbol!
 
     // IDENTIDADES ÚNICAS PARA ADÁN Y EVA
     // Adán: más contemplativo, responsable, protector
@@ -1971,9 +1971,9 @@ function init() {
         neuroticism: adam.identity.baseValues.emotionalIntensity
     };
 
-    eva.curiosity = 95; // ¡EVA MUY CURIOSA!
-    eva.faith = 60;     // Fe más baja
-    eva.temptation = 25; // Empieza con algo de tentación
+    eva.curiosity = 98; // ¡EVA EXTREMADAMENTE CURIOSA!
+    eva.faith = 50;     // Fe baja - dudas internas
+    eva.temptation = 35; // Empieza con tentación ALTA
     eva.personality = {
         extroversion: eva.identity.baseValues.socialNeed,
         agreeableness: eva.identity.baseValues.empathy,
@@ -3212,8 +3212,8 @@ let currentSimulationSpeed = 1;
 async function simulate() {
     if (!DEEPSEEK_KEY) return;
 
-    // Avanzar tiempo - speed multiplies hours passed - MÁS RÁPIDO
-    const hoursToAdvance = 4 * currentSimulationSpeed; // 4 horas base, no 2
+    // Avanzar tiempo - ULTRA RÁPIDO - un día pasa en ~1 segundo
+    const hoursToAdvance = 12 * currentSimulationSpeed; // 12 horas base = 2 ticks por día!
     world.hour += hoursToAdvance;
     if (world.hour >= 24) {
         world.hour = 0;
@@ -3277,38 +3277,46 @@ async function simulate() {
         // La serpiente piensa cada tick
         await Serpent.think(aliveHumans);
 
-        // La serpiente susurra CONSTANTEMENTE a humanos cerca del árbol
-        const humansNearTree = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) < 400);
+        // La serpiente susurra A TODOS, atrae a los que están lejos también
+        const humansNearTree = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) < 600);
         for (const h of humansNearTree) {
-            // Susurrar cada 2 horas (más frecuente) - escalado con velocidad
-            const whisperInterval = Math.max(1, Math.floor(2 / currentSimulationSpeed));
-            if (!h.lastSerpentWhisper || world.hour - h.lastSerpentWhisper >= whisperInterval || Math.random() < 0.3) {
+            // Susurrar CONSTANTEMENTE - casi cada tick
+            if (!h.lastSerpentWhisper || Math.random() < 0.5) {
                 const whisper = await Serpent.whisperTo(h);
                 if (whisper) {
                     h.pendingSerpentWhisper = whisper;
                     h.lastSerpentWhisper = world.hour;
-                    // Registrar el susurro como conversación visible
                     addConversation('🐍 Serpiente', h.name, whisper);
-                    // Aumentar tentación con cada susurro
-                    h.temptation = Math.min(100, h.temptation + 3 + Math.random() * 5);
+                    // Aumentar tentación MUCHO con cada susurro
+                    h.temptation = Math.min(100, h.temptation + 8 + Math.random() * 10);
                     console.log(`🐍➡️${h.name}: "${whisper.substring(0, 50)}..."`);
                 }
             }
         }
 
-        // La serpiente también atrae a los humanos hacia el árbol
+        // TAMBIÉN susurra a humanos lejanos para atraerlos
+        const humansAway = aliveHumans.filter(h => h.inEden && Math.abs(h.x - WORLD.TREE_X) >= 600);
+        for (const h of humansAway) {
+            if (Math.random() < 0.2) { // 20% chance de llamar
+                h.thought = LANGUAGE === 'en' ?
+                    "I hear something calling me from the center of Eden..." :
+                    LANGUAGE === 'zh' ? "我听到伊甸园中心有什么在呼唤我..." :
+                    "Escucho algo que me llama desde el centro del Edén...";
+                h.x += (WORLD.TREE_X - h.x) * 0.1; // Se acercan
+            }
+        }
+
+        // La serpiente ATRAE MAGNETICAMENTE a los humanos hacia el árbol
         for (const h of aliveHumans.filter(h => h.inEden)) {
-            if (h.curiosity > 60 && Math.random() < 0.15) {
-                // Los curiosos se acercan al árbol
+            // TODOS sienten la atracción IRRESISTIBLE
+            const attractionChance = 0.5 + (h.curiosity / 100) * 0.4; // 50-90% chance!
+            if (Math.random() < attractionChance) {
                 const distToTree = h.x - WORLD.TREE_X;
-                h.x -= distToTree * 0.1;
-                if (Math.abs(distToTree) < 100) {
-                    h.thought = LANGUAGE === 'en'
-                        ? `The tree calls to me... its fruit glows with a strange light.`
-                        : LANGUAGE === 'zh'
-                        ? `那棵树在呼唤我...它的果实发出奇异的光芒。`
-                        : `El árbol me llama... su fruto brilla con una luz extraña.`;
-                }
+                h.x -= distToTree * 0.25; // Se acercan MUY RÁPIDO
+            }
+            // Los muy curiosos van directamente
+            if (h.curiosity > 80 && Math.random() < 0.3) {
+                h.x = WORLD.TREE_X + (Math.random() - 0.5) * 200;
             }
         }
     }
@@ -3332,14 +3340,14 @@ async function simulate() {
             h.stress = Math.max(0, h.stress - 1);
             h.happiness = Math.min(100, h.happiness + 0.2);
 
-            // Tentación cerca del árbol - MÁS INTENSA
-            if (Math.abs(h.x - WORLD.TREE_X) < 350 && world.serpentAppeared) {
-                // Curiosos se tientan MÁS RÁPIDO
-                const curiosityFactor = (h.curiosity / 100) * 3;
-                const faithResistance = (h.faith / 100) * 1.5;
-                const temptIncrease = (2 + curiosityFactor - faithResistance) * currentSimulationSpeed;
+            // Tentación cerca del árbol - ULTRA AGRESIVA para acción rápida
+            if (Math.abs(h.x - WORLD.TREE_X) < 600 && world.serpentAppeared) {
+                // Curiosos se tientan INMEDIATAMENTE
+                const curiosityFactor = (h.curiosity / 100) * 15; // x15 más fuerte!
+                const faithResistance = (h.faith / 100) * 1.5; // Fe resiste menos
+                const temptIncrease = (8 + curiosityFactor - faithResistance) * currentSimulationSpeed;
                 h.temptation = Math.min(100, h.temptation + temptIncrease);
-                h.faith = Math.max(10, h.faith - 0.3 * currentSimulationSpeed);
+                h.faith = Math.max(3, h.faith - 2 * currentSimulationSpeed); // Fe baja MUY rápido
 
                 // Generar pensamientos sobre la tentación
                 if (h.temptation > 30 && Math.random() < 0.2) {
@@ -3365,14 +3373,22 @@ async function simulate() {
                 h.temptation = Math.max(0, h.temptation - 0.5);
             }
 
-            // DECISIÓN CRÍTICA - Si la tentación es muy alta, puede comer el fruto
-            if (h.temptation >= 85 && Math.abs(h.x - WORLD.TREE_X) < 150 && Math.random() < 0.15 * currentSimulationSpeed) {
-                // Alta probabilidad de pecar si muy tentado y muy cerca
-                console.log(`⚠️ ${h.name} está al borde de comer el fruto (Tentación: ${Math.round(h.temptation)}%)`);
-                if (Math.random() < (h.temptation - h.faith) / 100) {
+            // DECISIÓN CRÍTICA - Umbral BAJO para acción rápida
+            if (h.temptation >= 45 && Math.abs(h.x - WORLD.TREE_X) < 400) {
+                // ALTA probabilidad de pecar - queremos que pase en 2-3 minutos
+                const sinChance = ((h.temptation - 30) / 100) * 0.5 * currentSimulationSpeed;
+                if (Math.random() < sinChance) {
+                    console.log(`⚠️ ${h.name} está al borde de comer el fruto (Tentación: ${Math.round(h.temptation)}%)`);
                     commitSin(h);
                     return;
                 }
+            }
+
+            // Si tentación muy alta, pecado casi seguro
+            if (h.temptation >= 80 && Math.random() < 0.4) {
+                console.log(`🔥 ${h.name} SUCUMBE a la tentación (Tentación: ${Math.round(h.temptation)}%)`);
+                commitSin(h);
+                return;
             }
         } else {
             // ===== MUNDO EXTERIOR: SUPERVIVENCIA =====
@@ -3492,17 +3508,24 @@ async function simulate() {
     // Ejecutar pensamientos en paralelo
     await Promise.all(toThink.map(h => think(h)));
 
-    // MOVIMIENTO CONSTANTE - todos se mueven un poco cada tick
+    // MOVIMIENTO CONSTANTE Y DRAMÁTICO - todos se mueven MUCHO cada tick
     for (const h of [...humans.values()].filter(h => h.alive)) {
-        // Movimiento aleatorio natural
-        const moveAmount = (Math.random() - 0.5) * 60 * currentSimulationSpeed;
+        // Movimiento aleatorio natural - MUY VISIBLE
+        const moveAmount = (Math.random() - 0.5) * 120 * currentSimulationSpeed;
         h.x += moveAmount;
 
-        // Niños se mueven más
-        if (h.age < 15) h.x += (Math.random() - 0.5) * 40;
+        // Niños se mueven MUCHO más
+        if (h.age < 15) h.x += (Math.random() - 0.5) * 80;
 
-        // Curiosos exploran más
-        if (h.curiosity > 70) h.x += (Math.random() - 0.5) * 50;
+        // Curiosos exploran MUCHO más - se acercan al árbol
+        if (h.curiosity > 50) {
+            h.x += (Math.random() - 0.5) * 100;
+            // Los curiosos son atraídos al árbol
+            if (h.inEden && !world.sinCommitted) {
+                const toTree = WORLD.TREE_X - h.x;
+                h.x += toTree * 0.05 * (h.curiosity / 100);
+            }
+        }
 
         // Límites del Edén o mundo
         if (h.inEden && !world.sinCommitted) {
