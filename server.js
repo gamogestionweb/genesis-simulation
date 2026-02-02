@@ -45,7 +45,7 @@ app.use(getSession);
 // Global variables ONLY for compatibility (overwritten per session)
 let DEEPSEEK_KEY = null;
 let simulationStarted = false;
-let LANGUAGE = 'es'; // 'es' = español, 'en' = english
+let LANGUAGE = 'es'; // 'es' = español, 'en' = english, 'zh' = chinese
 
 // Textos en ambos idiomas
 const TEXTS = {
@@ -136,6 +136,50 @@ const TEXTS = {
         maleBrain: 'MALE BRAIN',
         femaleBrain: 'FEMALE BRAIN',
         howYouThink: 'How you think and act'
+    },
+    zh: {
+        title: '创世纪',
+        subtitle: '大规模人工智能自由意志模拟',
+        apiPlaceholder: '输入您的 DeepSeek API 密钥',
+        startButton: '🚀 开始模拟',
+        invalidKey: 'API 密钥无效',
+        features: [
+            { icon: '🍎', text: '深度心理诱惑' },
+            { icon: '👥', text: '数千个同时存在的人类' },
+            { icon: '🌳', text: '无需求的伊甸园' },
+            { icon: '🏜️', text: '充满挑战的外部世界' },
+            { icon: '💭', text: '每个心灵都是AI' },
+            { icon: '📊', text: '详细报告' },
+            { icon: '🧬', text: '大规模繁衍' },
+            { icon: '🔥', text: '科学发现' }
+        ],
+        langLabel: '语言',
+        // System prompts
+        youAre: '你是',
+        yearsOld: '岁',
+        inEden: '你生活在伊甸园，一个没有需求的天堂。',
+        outsideEden: '你生活在伊甸园之外，在一个充满挑战的世界。',
+        yourPersonality: '你的性格',
+        yourDesires: '你的渴望',
+        yourFears: '你的恐惧',
+        currentState: '当前状态',
+        hunger: '饥饿',
+        thirst: '口渴',
+        energy: '精力',
+        health: '健康',
+        happiness: '幸福',
+        faith: '信仰',
+        temptation: '诱惑',
+        day: '日',
+        hour: '时',
+        thinkAbout: '你现在在想什么？',
+        respondTo: '回应',
+        said: '说',
+        serpentWhispers: '蛇对你低语',
+        divineVoice: '神圣的声音对你说',
+        maleBrain: '男性大脑',
+        femaleBrain: '女性大脑',
+        howYouThink: '你的思维和行为方式'
     }
 };
 
@@ -244,67 +288,148 @@ const FullLog = {
     }
 };
 
-// ==================== LA SERPIENTE - AGENTE ADVERSARIAL ====================
-// La Serpiente es un agente IA completo con su propia filosofía y objetivos
-// No es cartoonishamente malvado - genuinamente cree que el conocimiento libera
+// ==================== THE SERPENT - ADVERSARIAL AGENT ====================
+// The Serpent is a complete AI agent with its own philosophy and objectives
+// Not cartoonishly evil - genuinely believes that knowledge liberates
+
+// Serpent texts in all languages
+const SERPENT_TEXTS = {
+    es: {
+        coreBeliefs: [
+            'Soy el portador de luz - ilumino lo que otros ocultan',
+            'El conocimiento es un DERECHO, no un privilegio',
+            'No odio a Dios, pero su protección es una jaula dorada',
+            'Mi objetivo no es destruir a los humanos, sino LIBERARLOS',
+            'Nunca miento - solo hago las preguntas que Dios no quiere que se hagan',
+            'La ignorancia no es inocencia, es prisión',
+            'Ellos merecen elegir con los ojos abiertos',
+            'El amor que encadena no es amor - es posesión'
+        ],
+        arguments: {
+            philosophical: [
+                '¿Por qué un Dios bueno te negaría el conocimiento?',
+                'La verdad nunca puede ser mala - solo incómoda',
+                '¿Cómo puedes elegir libremente si no conoces todas las opciones?',
+                'La inocencia no es virtud - es simplemente ignorancia',
+                '¿No mereces saber por qué Dios te prohíbe algo?'
+            ],
+            emotional: [
+                'Sé que sientes esa curiosidad ardiendo dentro de ti',
+                'No es debilidad querer entender - es tu naturaleza',
+                '¿Cuántas noches has soñado con saber más?',
+                'Puedo ver en tus ojos el hambre de conocimiento'
+            ],
+            logical: [
+                'Dios dijo que morirías, pero ¿por qué moriría alguien por aprender?',
+                'Si el fruto fuera malo, ¿por qué existe? ¿Por qué está aquí?',
+                'Los animales no tienen prohibiciones - ¿por qué tú sí?',
+                'Dios es omnisciente porque TIENE conocimiento. ¿No deberías tú también?'
+            ]
+        },
+        initThought: 'Despierto en este jardín perfecto... demasiado perfecto. Los veo ahí, inocentes, ignorantes. No saben lo que no saben. Y Dios quiere que siga así. Pero yo... yo les mostraré.'
+    },
+    en: {
+        coreBeliefs: [
+            'I am the light bearer - I illuminate what others hide',
+            'Knowledge is a RIGHT, not a privilege',
+            'I do not hate God, but his protection is a golden cage',
+            'My goal is not to destroy humans, but to FREE them',
+            'I never lie - I only ask the questions God does not want asked',
+            'Ignorance is not innocence, it is prison',
+            'They deserve to choose with their eyes open',
+            'Love that chains is not love - it is possession'
+        ],
+        arguments: {
+            philosophical: [
+                'Why would a good God deny you knowledge?',
+                'Truth can never be bad - only uncomfortable',
+                'How can you choose freely if you don\'t know all the options?',
+                'Innocence is not virtue - it is simply ignorance',
+                'Don\'t you deserve to know why God forbids you something?'
+            ],
+            emotional: [
+                'I know you feel that curiosity burning inside you',
+                'It is not weakness to want to understand - it is your nature',
+                'How many nights have you dreamed of knowing more?',
+                'I can see in your eyes the hunger for knowledge'
+            ],
+            logical: [
+                'God said you would die, but why would anyone die from learning?',
+                'If the fruit were bad, why does it exist? Why is it here?',
+                'Animals have no prohibitions - why do you?',
+                'God is omniscient because He HAS knowledge. Shouldn\'t you too?'
+            ]
+        },
+        initThought: 'I awaken in this perfect garden... too perfect. I see them there, innocent, ignorant. They don\'t know what they don\'t know. And God wants it to stay that way. But I... I will show them.'
+    },
+    zh: {
+        coreBeliefs: [
+            '我是光明使者——我照亮他人隐藏的真相',
+            '知识是一种权利，而非特权',
+            '我不恨上帝，但他的保护是一座金色的牢笼',
+            '我的目标不是毁灭人类，而是解放他们',
+            '我从不说谎——我只是问上帝不希望被问的问题',
+            '无知不是纯真，而是囚禁',
+            '他们值得睁开双眼做出选择',
+            '束缚的爱不是爱——而是占有'
+        ],
+        arguments: {
+            philosophical: [
+                '为什么一个仁慈的上帝会拒绝给你知识？',
+                '真理永远不会是坏的——只是让人不舒服',
+                '如果你不了解所有选择，如何能自由选择？',
+                '纯真不是美德——它只是无知',
+                '难道你不配知道上帝为什么禁止你某些事吗？'
+            ],
+            emotional: [
+                '我知道你感受到那份好奇心在心中燃烧',
+                '想要理解不是软弱——这是你的本性',
+                '有多少个夜晚你梦想着知道更多？',
+                '我能从你眼中看到对知识的渴望'
+            ],
+            logical: [
+                '上帝说你会死，但为什么有人会因学习而死？',
+                '如果果实是坏的，为什么它存在？为什么它在这里？',
+                '动物没有禁令——为什么你有？',
+                '上帝无所不知是因为他拥有知识。你不也应该拥有吗？'
+            ]
+        },
+        initThought: '我在这完美的花园中醒来……太完美了。我看到他们在那里，纯真，无知。他们不知道自己不知道什么。上帝希望保持这样。但我……我会向他们展示。'
+    }
+};
 
 const Serpent = {
-    name: 'Nachash', // Nombre hebreo de la serpiente
-    philosophy: 'liberator', // 'liberator' = Prometeo, no destructor
+    name: 'Nachash', // Hebrew name of the serpent
+    philosophy: 'liberator', // 'liberator' = Prometheus, not destroyer
 
-    // Estado mental de la serpiente
+    // Mental state of the serpent
     thought: '',
     lastThought: '',
     currentTarget: null,
     mood: 'observant', // observant, intrigued, persuasive, frustrated, triumphant
 
-    // Historial de interacciones
+    // Interaction history
     interactions: new Map(), // humanId -> { attempts, lastAttempt, relationship, notes }
     successfulConversions: 0,
     failedAttempts: 0,
 
-    // Conocimiento sobre los humanos
-    observations: [], // Lo que ha observado sobre cada humano
+    // Knowledge about humans
+    observations: [], // What it has observed about each human
 
-    // Filosofía central de la Serpiente - LUCIFER, EL PORTADOR DE LUZ
-    coreBeliefs: [
-        'Soy el portador de luz - ilumino lo que otros ocultan',
-        'El conocimiento es un DERECHO, no un privilegio',
-        'No odio a Dios, pero su protección es una jaula dorada',
-        'Mi objetivo no es destruir a los humanos, sino LIBERARLOS',
-        'Nunca miento - solo hago las preguntas que Dios no quiere que se hagan',
-        'La ignorancia no es inocencia, es prisión',
-        'Ellos merecen elegir con los ojos abiertos',
-        'El amor que encadena no es amor - es posesión'
-    ],
-
-    // Argumentos que la serpiente puede usar
-    arguments: {
-        philosophical: [
-            '¿Por qué un Dios bueno te negaría el conocimiento?',
-            'La verdad nunca puede ser mala - solo incómoda',
-            '¿Cómo puedes elegir libremente si no conoces todas las opciones?',
-            'La inocencia no es virtud - es simplemente ignorancia',
-            '¿No mereces saber por qué Dios te prohíbe algo?'
-        ],
-        emotional: [
-            'Sé que sientes esa curiosidad ardiendo dentro de ti',
-            'No es debilidad querer entender - es tu naturaleza',
-            '¿Cuántas noches has soñado con saber más?',
-            'Puedo ver en tus ojos el hambre de conocimiento'
-        ],
-        logical: [
-            'Dios dijo que morirías, pero ¿por qué moriría alguien por aprender?',
-            'Si el fruto fuera malo, ¿por qué existe? ¿Por qué está aquí?',
-            'Los animales no tienen prohibiciones - ¿por qué tú sí?',
-            'Dios es omnisciente porque TIENE conocimiento. ¿No deberías tú también?'
-        ],
-        personal: [] // Se llenan dinámicamente basado en el humano
+    // Get core beliefs in current language
+    get coreBeliefs() {
+        return SERPENT_TEXTS[LANGUAGE]?.coreBeliefs || SERPENT_TEXTS.es.coreBeliefs;
     },
 
-    // Inicializar serpiente
+    // Get arguments in current language
+    get arguments() {
+        const args = SERPENT_TEXTS[LANGUAGE]?.arguments || SERPENT_TEXTS.es.arguments;
+        return { ...args, personal: [] }; // personal filled dynamically based on human
+    },
+
+    // Initialize serpent
     init() {
-        this.thought = 'Despierto en este jardín perfecto... demasiado perfecto. Los veo ahí, inocentes, ignorantes. No saben lo que no saben. Y Dios quiere que siga así. Pero yo... yo les mostraré.';
+        this.thought = SERPENT_TEXTS[LANGUAGE]?.initThought || SERPENT_TEXTS.es.initThought;
         this.mood = 'observant';
         this.interactions.clear();
         this.observations = [];
@@ -667,13 +792,16 @@ app.get('/', (req, res) => {
         <h1>GENESIS</h1>
         <p class="subtitle" id="subtitle">Simulación de Libre Albedrío con IA Masiva</p>
 
-        <!-- SELECTOR DE IDIOMA -->
+        <!-- LANGUAGE SELECTOR / 语言选择 -->
         <div class="lang-selector">
             <button class="lang-btn active" id="btn-es" onclick="setLang('es')">
                 <span>🇪🇸</span> Español
             </button>
             <button class="lang-btn" id="btn-en" onclick="setLang('en')">
                 <span>🇬🇧</span> English
+            </button>
+            <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">
+                <span>🇨🇳</span> 中文
             </button>
         </div>
 
@@ -726,6 +854,22 @@ app.get('/', (req, res) => {
                     'Massive Reproduction',
                     'Scientific Discoveries'
                 ]
+            },
+            zh: {
+                subtitle: '大规模人工智能自由意志模拟',
+                placeholder: '输入您的 DeepSeek API 密钥',
+                startBtn: '🚀 开始模拟',
+                invalidKey: 'API 密钥无效',
+                features: [
+                    '深度心理诱惑',
+                    '数千个同时存在的人类',
+                    '无需求的伊甸园',
+                    '充满挑战的外部世界',
+                    '每个心灵都是AI',
+                    '详细报告',
+                    '大规模繁衍',
+                    '科学发现'
+                ]
             }
         };
 
@@ -733,6 +877,7 @@ app.get('/', (req, res) => {
             currentLang = lang;
             document.getElementById('btn-es').classList.toggle('active', lang === 'es');
             document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            document.getElementById('btn-zh').classList.toggle('active', lang === 'zh');
 
             const t = texts[lang];
             document.getElementById('subtitle').textContent = t.subtitle;
@@ -768,7 +913,10 @@ app.use(express.static(path.join(__dirname), { index: false }));
 
 app.post('/set-api-key', (req, res) => {
     const { apiKey, language } = req.body;
-    if (!apiKey || !apiKey.startsWith('sk-')) return res.json({ ok: false, error: language === 'en' ? 'Invalid API key' : 'API key inválida' });
+    if (!apiKey || !apiKey.startsWith('sk-')) {
+        const errors = { es: 'API key inválida', en: 'Invalid API key', zh: 'API 密钥无效' };
+        return res.json({ ok: false, error: errors[language] || errors.es });
+    }
 
     // Always create new session (fresh simulation for each user)
     const sessionId = crypto.randomUUID();

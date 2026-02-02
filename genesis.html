@@ -839,6 +839,130 @@ const i18n = {
         pregnantLabel: 'Pregnant',
         couples: 'Couples',
         generations: 'Generations'
+    },
+    zh: {
+        // Header
+        day: '日',
+        population: '人口',
+        births: '出生',
+        downloadReport: '📊 下载报告',
+        // Tabs
+        tabPopulation: '👥 人口',
+        tabConversations: '💬 对话',
+        tabWorld: '🌍 世界',
+        tabStats: '📊 统计',
+        tabLogs: '📜 日志',
+        tabDivine: '🔮 神圣之声',
+        // Human card
+        years: '岁',
+        generation: '代',
+        inEden: '在伊甸园',
+        outsideEden: '伊甸园外',
+        pregnant: '怀孕',
+        dead: '已故',
+        hunger: '饥饿',
+        thirst: '口渴',
+        energy: '精力',
+        health: '健康',
+        happiness: '幸福',
+        faith: '信仰',
+        temptation: '诱惑',
+        thinking: '正在思考',
+        lastThought: '最后的想法',
+        personality: '性格',
+        desires: '渴望',
+        fears: '恐惧',
+        // World
+        sinCommitted: '罪已犯下！',
+        sinBy: '由',
+        onDay: '在第',
+        serpentActive: '蛇已出现',
+        weather: '天气',
+        temperature: '温度',
+        cherubimGuarding: '基路伯守卫伊甸园',
+        discoveries: '发现',
+        // Divine voice
+        divineTitle: '神圣之声',
+        speakAs: '以...身份说话',
+        target: '目标',
+        allHumans: '所有人类',
+        sendMessage: '发送消息',
+        quickMessages: '快速消息',
+        responses: '回应',
+        noResponses: '暂无回应',
+        // Stats
+        totalPopulation: '总人口',
+        alive: '存活',
+        totalBirths: '总出生数',
+        totalDeaths: '总死亡数',
+        avgAge: '平均年龄',
+        maxGen: '最大世代',
+        inEdenCount: '在伊甸园内',
+        outsideEdenCount: '在伊甸园外',
+        // Logs
+        thoughts: '思想',
+        conversationsLog: '对话',
+        decisionsLog: '决策',
+        birthsLog: '出生',
+        deathsLog: '死亡',
+        sinsLog: '罪恶事件',
+        // Roles
+        roleGod: '上帝',
+        roleSerpent: '蛇',
+        roleInnerVoice: '内心声音',
+        roleAngel: '天使',
+        roleMystery: '神秘之声',
+        // Quick divine messages
+        quickBlessing: '我祝福你们，我的孩子们！',
+        quickWarning: '记住我的诫命...',
+        quickLove: '我深深地爱着你们',
+        quickTemptation: '你不好奇吗？',
+        // Divine UI
+        divineSystem: '神圣之声系统',
+        divineDesc: '以超越的声音与人类对话。你可以是上帝、蛇或神秘之声...',
+        speakAsLabel: '以...身份说话：',
+        targetLabel: '目标：',
+        messageLabel: '你的消息：',
+        sendDivine: '⚡ 发送神圣消息',
+        recentResponses: '📜 最近的回应：',
+        temptFruit: '🐍 用果实诱惑',
+        divineMandate: '🌟 神圣命令',
+        questionHappiness: '❓ 质疑幸福',
+        inciteKnowledge: '🐍 激发求知欲',
+        allBroadcast: '📢 所有人类（广播）',
+        optGod: '🌟 上帝（强大神圣的声音）',
+        optSerpent: '🐍 蛇（诱人而狡猾）',
+        optInner: '💭 内心声音（自己的想法）',
+        optAngel: '👼 天使（天上的使者）',
+        optMystery: '❓ 神秘之声',
+        // Phase banners
+        expelledEden: '被逐出伊甸园',
+        ateFruit: '吃了果实',
+        serpentAppeared: '蛇已出现在禁忌之树旁...',
+        inGardenEden: '在伊甸园——完美的天堂',
+        phaseFallen: '堕落',
+        phaseEden: '伊甸',
+        // Stats labels
+        temperament: '气质',
+        quirks: '特质',
+        fearsLabel: '恐惧',
+        desiresLabel: '渴望',
+        development: '发展',
+        vocabulary: '词汇',
+        curiosity: '好奇心',
+        wisdom: '智慧',
+        deceased: '已故',
+        averages: '平均值',
+        age: '年龄',
+        knowledge: '知识',
+        fire: '火',
+        tools: '工具',
+        huntingLabel: '狩猎',
+        building: '建造',
+        biomeDistribution: '生物群落分布',
+        pregnantLabel: '怀孕',
+        couples: '配偶',
+        generations: '世代'
     }
 };
 
@@ -859,12 +983,18 @@ function updateUILanguage() {
     const tabLogs = document.getElementById('tab-logs');
     const tabStats = document.getElementById('tab-stats');
 
-    if (tabPopulation) tabPopulation.textContent = lang === 'en' ? '👥 Population' : '👥 Población';
-    if (tabDivine) tabDivine.textContent = lang === 'en' ? '🔮 DIVINE VOICE' : '🔮 VOZ DIVINA';
-    if (tabConversations) tabConversations.textContent = lang === 'en' ? '💬 Conversations' : '💬 Conversaciones';
-    if (tabFamily) tabFamily.textContent = lang === 'en' ? '🌳 Family Tree' : '🌳 Árbol Familiar';
-    if (tabLogs) tabLogs.textContent = '📜 Logs';
-    if (tabStats) tabStats.textContent = '📊 Stats';
+    const tabTexts = {
+        es: { pop: '👥 Población', divine: '🔮 VOZ DIVINA', conv: '💬 Conversaciones', family: '🌳 Árbol Familiar', logs: '📜 Logs', stats: '📊 Stats' },
+        en: { pop: '👥 Population', divine: '🔮 DIVINE VOICE', conv: '💬 Conversations', family: '🌳 Family Tree', logs: '📜 Logs', stats: '📊 Stats' },
+        zh: { pop: '👥 人口', divine: '🔮 神圣之声', conv: '💬 对话', family: '🌳 家谱', logs: '📜 日志', stats: '📊 统计' }
+    };
+    const tt = tabTexts[lang] || tabTexts.es;
+    if (tabPopulation) tabPopulation.textContent = tt.pop;
+    if (tabDivine) tabDivine.textContent = tt.divine;
+    if (tabConversations) tabConversations.textContent = tt.conv;
+    if (tabFamily) tabFamily.textContent = tt.family;
+    if (tabLogs) tabLogs.textContent = tt.logs;
+    if (tabStats) tabStats.textContent = tt.stats;
 
     // Divine section
     const divineTitle = document.getElementById('divine-title');
@@ -909,12 +1039,15 @@ function updateUILanguage() {
     if (quickQuestion) quickQuestion.textContent = t('questionHappiness');
     if (quickKnowledge) quickKnowledge.textContent = t('inciteKnowledge');
 
-    // Placeholder del mensaje
+    // Message placeholder
     const divineMessage = document.getElementById('divineMessage');
     if (divineMessage) {
-        divineMessage.placeholder = lang === 'en' ?
-            "Write your message here..." :
-            "Escribe tu mensaje aquí...";
+        const placeholders = {
+            es: "Escribe tu mensaje aquí...",
+            en: "Write your message here...",
+            zh: "在这里写下你的消息..."
+        };
+        divineMessage.placeholder = placeholders[lang] || placeholders.es;
     }
 }
 
